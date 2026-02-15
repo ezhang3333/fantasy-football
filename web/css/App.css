@@ -96,6 +96,22 @@ body{
     font-weight: 600;
 }
 
+.sidebar-panel-heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.sidebar-panel-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    flex: 0 0 auto;
+    pointer-events: none;
+}
+
 .sidebar-panel-chevron {
     display: inline-flex;
     align-items: center;
@@ -106,9 +122,9 @@ body{
     display: flex;
     flex-direction: column;
     gap: 10px;
-    overflow: hidden;
+    overflow: visible;
     opacity: 1;
-    transition: max-height 0.2s ease, opacity 0.2s ease, padding 0.2s ease;
+    transition: max-height 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease-out, padding 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     padding: 4px 0 10px 0;
 }
 
@@ -430,9 +446,20 @@ body{
 }
 
 .output-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 22px;
     font-weight: 600;
     color: var(--text);
+}
+
+.output-title-icon {
+    padding-top: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .output-subtitle {

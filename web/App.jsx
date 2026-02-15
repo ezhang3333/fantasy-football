@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Funnel, History, LoaderPinwheel, Variable } from "lucide-react";
 import "./css/App.css";
 import NumberFilter from "./NumberFilter.jsx";
 import DropdownFilter from "./DropdownFilter.jsx";
@@ -256,7 +256,12 @@ export default function App() {
             aria-controls="sidebar-section-model"
             onClick={() => toggleSidebarSection("model")}
           >
-            <span className="sidebar-panel-title">Model Parameters</span>
+            <span className="sidebar-panel-heading">
+              <span className="sidebar-panel-icon" aria-hidden="true">
+                <Variable size={14} />
+              </span>
+              <span className="sidebar-panel-title">Model Parameters</span>
+            </span>
             <span className="sidebar-panel-chevron" aria-hidden="true">
               {getChevronForSection(sidebarSections.model)}
             </span>
@@ -289,7 +294,12 @@ export default function App() {
             aria-controls="sidebar-section-training"
             onClick={() => toggleSidebarSection("training")}
           >
-            <span className="sidebar-panel-title">Training Parameters</span>
+            <span className="sidebar-panel-heading">
+              <span className="sidebar-panel-icon" aria-hidden="true">
+                <Funnel size={14} />
+              </span>
+              <span className="sidebar-panel-title">Training Parameters</span>
+            </span>
             <span className="sidebar-panel-chevron" aria-hidden="true">
               {getChevronForSection(sidebarSections.training)}
             </span>
@@ -338,7 +348,12 @@ export default function App() {
             aria-controls="sidebar-section-history"
             onClick={() => toggleSidebarSection("history")}
           >
-            <span className="sidebar-panel-title">Training History</span>
+            <span className="sidebar-panel-heading">
+              <span className="sidebar-panel-icon" aria-hidden="true">
+                <History size={14} />
+              </span>
+              <span className="sidebar-panel-title">Training History</span>
+            </span>
             <span className="sidebar-panel-chevron" aria-hidden="true">
               {getChevronForSection(sidebarSections.history)}
             </span>
@@ -375,7 +390,12 @@ export default function App() {
       <div className="output-container">
         <div className="output-header">
           <div>
-            <div className="output-title">Fantasy Football Predictor</div>
+            <div className="output-title">
+              <span className="output-title-icon" aria-hidden="true">
+                <LoaderPinwheel size={20} />
+              </span>
+              <span>Fantasy Football Predictor</span>
+            </div>
             <div className="output-subtitle">Gradient Boosted Tree Model</div>
           </div>
           <div className="view-toggle">
