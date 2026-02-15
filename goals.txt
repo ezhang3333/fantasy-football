@@ -1,8 +1,9 @@
 Goals In Priority:
 
-1. Add icons next to the three sections in the filter adn hsitory tab
 2. Did all the backend for valid season and stuff but im pretty sure you can just pull it from the constants.py file called season_to_extract
-1. Expose selecting what season to trian, validate, and predict, what positions to train on to the frontend
+3. Make sure that validatio season is extracted from constants.py or at least maybe some other same way and expose what week you want to train up until and what week you want to predict on
+4. When the numbers are too big in card view, it forces them to be larger than 1 line
+4. Think about maybe also exposing how many prev weeks you want to extract and how many weeks to predict for future
 2. Expose the metadata in the model outputs page in like a side bar for users to see
 3. Reset filter button and also each page should have memory of its last used filters
 

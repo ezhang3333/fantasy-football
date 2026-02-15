@@ -142,15 +142,18 @@ body{
     min-height: 0;
 }
 
-.sidebar-panel-body.is-collapsed {
+.sidebar-panel.is-collapsed .sidebar-panel-body {
     max-height: 0;
     opacity: 0;
     padding-top: 0;
     padding-bottom: 0;
     gap: 0;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
 }
 
-.sidebar-panel-body.history.is-collapsed {
+.sidebar-panel.is-collapsed .sidebar-panel-body.history {
     flex: 0;
     min-height: 0;
 }

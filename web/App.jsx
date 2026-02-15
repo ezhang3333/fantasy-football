@@ -15,7 +15,7 @@ import { formatOneDecimal, getRowKey } from "./util.js";
 
 const SIDEBAR_SECTIONS_STORAGE_KEY = "ff.sidebar.sections.v1";
 const DEFAULT_SIDEBAR_SECTIONS = {
-  model: true,
+  model: false,
   training: true,
   history: true,
 };
@@ -248,7 +248,7 @@ export default function App() {
   return (
     <div className="base-container">
       <div className="filter-and-history-sidebar">
-        <div className="sidebar-panel">
+        <div className={`sidebar-panel${sidebarSections.model ? "" : " is-collapsed"}`}>
           <button
             type="button"
             className="sidebar-panel-header"
@@ -268,7 +268,7 @@ export default function App() {
           </button>
           <div
             id="sidebar-section-model"
-            className={`sidebar-panel-body model${sidebarSections.model ? "" : " is-collapsed"}`}
+            className="sidebar-panel-body model"
           >
             {MODEL_FILTERS.map((f) => (
               <NumberFilter
@@ -286,7 +286,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="sidebar-panel">
+        <div className={`sidebar-panel${sidebarSections.training ? "" : " is-collapsed"}`}>
           <button
             type="button"
             className="sidebar-panel-header"
@@ -306,7 +306,7 @@ export default function App() {
           </button>
           <div
             id="sidebar-section-training"
-            className={`sidebar-panel-body training${sidebarSections.training ? "" : " is-collapsed"}`}
+            className="sidebar-panel-body training"
           >
             <div className="sidebar-section">
               <div className="validation-season-title">Position</div>
@@ -340,7 +340,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="sidebar-panel sidebar-panel-history">
+        <div className={`sidebar-panel sidebar-panel-history${sidebarSections.history ? "" : " is-collapsed"}`}>
           <button
             type="button"
             className="sidebar-panel-header"
@@ -360,7 +360,7 @@ export default function App() {
           </button>
           <div
             id="sidebar-section-history"
-            className={`sidebar-panel-body history${sidebarSections.history ? "" : " is-collapsed"}`}
+            className="sidebar-panel-body history"
           >
             <div className="history-list scroll-container">
               {listBatchPredictions.map((prediction_batch) => (
