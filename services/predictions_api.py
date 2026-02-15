@@ -6,10 +6,11 @@ import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from constants import ALL_POSITIONS, DB_PATH, SEASONS_TO_EXTRACT
 from model.database import PredictionStore
 from model.gbt_regression import XGBHyperParams, load_final_dataset, train_xgb_regressor
 from model.predict import _default_output_columns, predict_position
-from constants import ALL_POSITIONS, DB_PATH
+from nfl_pipeline import NFLDataPipeline
 
 
 class Position(str, Enum):
@@ -27,9 +28,8 @@ app.add_middleware(
         "https://localhost:3000",
     ],
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
-
 
 @lru_cache(maxsize=1)
 def _store() -> PredictionStore:
@@ -78,53 +78,70 @@ def _positions_from_query(positions: str | None) -> list[Position]:
     return parsed_positions
 
 
-def _compute_valid_val_seasons(data_dir: str, positions: list[Position]) -> list[int]:
+def _load_position_seasons(data_dir: str, position: Position) -> set[int]:
+    try:
+        df = load_final_dataset(data_dir, position.value)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unable to load dataset for {position.value} from {data_dir}: {exc}",
+        ) from exc
+    if "season" not in df.columns:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Dataset for {position.value} is missing the `season` column.",
+        )
+
+    season_values = (
+        pd.to_numeric(df["season"], errors="coerce")
+        .dropna()
+        .astype(int)
+        .unique()
+        .tolist()
+    )
+    return {int(season) for season in season_values}
+
+
+def _compute_shared_available_seasons(data_dir: str, positions: list[Position]) -> list[int]:
     if not positions:
         raise HTTPException(status_code=400, detail="At least one position is required.")
 
     shared_seasons: set[int] | None = None
-
     for position in positions:
-        try:
-            df = load_final_dataset(data_dir, position.value)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Unable to load dataset for {position.value} from {data_dir}: {exc}",
-            ) from exc
-        if "season" not in df.columns:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Dataset for {position.value} is missing the `season` column.",
-            )
-
-        season_values = (
-            pd.to_numeric(df["season"], errors="coerce")
-            .dropna()
-            .astype(int)
-            .unique()
-            .tolist()
-        )
-        seasons = sorted({int(season) for season in season_values})
-        if len(seasons) < 2:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"Position {position.value} has insufficient seasons for time split "
-                    f"(found {len(seasons)}: {seasons})."
-                ),
-            )
-
+        seasons = _load_position_seasons(data_dir, position)
         current_set = set(seasons)
         shared_seasons = current_set if shared_seasons is None else shared_seasons & current_set
 
-    return sorted(shared_seasons or [])
+    result = sorted(shared_seasons or [])
+    if not result:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No shared seasons found for positions {[p.value for p in positions]}.",
+        )
+    return result
+
+
+def _parse_extract_seasons() -> list[int]:
+    parsed: list[int] = []
+    for season in SEASONS_TO_EXTRACT:
+        try:
+            parsed.append(int(season))
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Invalid season in SEASONS_TO_EXTRACT: {season}",
+            ) from exc
+    if not parsed:
+        raise HTTPException(status_code=500, detail="SEASONS_TO_EXTRACT is empty.")
+    return sorted(set(parsed))
 
 
 class TrainRequest(BaseModel):
     positions: list[Position] = Field(default_factory=lambda: [Position.QB, Position.RB, Position.WR, Position.TE])
     data_dir: str = "pipeline_data/final"
     model_dir: str = "model/artifacts"
+    earliest_train_season: int = Field(ge=1)
+    max_train_season: int = Field(ge=1)
     val_season: int = Field(ge=1)
     n_estimators: int = Field(default=300, ge=1)
     learning_rate: float = Field(default=0.1, gt=0, le=1)
@@ -134,14 +151,84 @@ class TrainRequest(BaseModel):
     reg_lambda: float = Field(default=1.0, ge=0)
     reg_alpha: float = Field(default=0.0, ge=0)
 
-@app.get("/train/options/seasons")
-async def get_train_val_season_options(
+
+class RefreshDatasetRequest(BaseModel):
+    earliest_season: int = Field(ge=1)
+    latest_season: int = Field(ge=1)
+
+
+@app.get("/train/options/range")
+async def get_train_range_options(
     positions: str | None = Query(default=None, description="Comma-separated positions (e.g. QB,RB)"),
     data_dir: str = Query(default="pipeline_data/final"),
 ):
     selected_positions = _positions_from_query(positions)
-    seasons = _compute_valid_val_seasons(data_dir, selected_positions)
-    return {"seasons": seasons}
+    seasons = _compute_shared_available_seasons(data_dir, selected_positions)
+    min_available = seasons[0]
+    max_available = seasons[-1]
+    max_train_allowed = max_available - 1
+    return {
+        "available_seasons": seasons,
+        "min_available_season": min_available,
+        "max_available_season": max_available,
+        "max_train_season_allowed": max_train_allowed,
+        "default_max_train_season": max_train_allowed,
+    }
+
+
+@app.get("/data/refresh/options")
+async def get_data_refresh_options():
+    seasons = _parse_extract_seasons()
+    default_earliest = min(seasons)
+    default_latest = max(seasons)
+    return {
+        "allowed_earliest_season": default_earliest,
+        "allowed_latest_season": default_latest,
+        "default_earliest_season": default_earliest,
+        "default_latest_season": default_latest,
+        "configured_seasons": seasons,
+    }
+
+
+@app.post("/data/refresh")
+async def refresh_dataset(payload: RefreshDatasetRequest):
+    seasons = _parse_extract_seasons()
+    min_allowed = min(seasons)
+    max_allowed = max(seasons)
+
+    if payload.earliest_season > payload.latest_season:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Invalid season range: earliest_season={payload.earliest_season} "
+                f"is greater than latest_season={payload.latest_season}."
+            ),
+        )
+    if payload.earliest_season < min_allowed or payload.latest_season > max_allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Season range must be within configured extract bounds "
+                f"[{min_allowed}, {max_allowed}]. Received "
+                f"[{payload.earliest_season}, {payload.latest_season}]."
+            ),
+        )
+
+    requested_seasons = [str(season) for season in range(payload.earliest_season, payload.latest_season + 1)]
+
+    pipeline = NFLDataPipeline(requested_seasons)
+    pipeline.run_pipeline(
+        save_extracted=True,
+        save_cleaned=True,
+        save_final=True,
+        out_dir="pipeline_data",
+    )
+
+    return {
+        "status": "ok",
+        "message": "Dataset refresh completed.",
+        "seasons_extracted": requested_seasons,
+    }
 
 
 @app.get("/predictions/top")
@@ -188,16 +275,6 @@ async def get_latest_predictions(position: Position, store: PredictionStore = De
 
 @app.post("/train")
 async def train_models(payload: TrainRequest, store: PredictionStore = Depends(get_store)):
-    valid_seasons = _compute_valid_val_seasons(payload.data_dir, payload.positions)
-    if payload.val_season not in valid_seasons:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"Invalid val_season={payload.val_season} for positions "
-                f"{[p.value for p in payload.positions]}. Valid seasons: {valid_seasons}"
-            ),
-        )
-
     params = XGBHyperParams(
         n_estimators=payload.n_estimators,
         learning_rate=payload.learning_rate,
@@ -221,6 +298,8 @@ async def train_models(payload: TrainRequest, store: PredictionStore = Depends(g
             position.value,
             df,
             payload.model_dir,
+            earliest_train_season=payload.earliest_train_season,
+            max_train_season=payload.max_train_season,
             val_season=payload.val_season,
             params=params,
         )
@@ -233,8 +312,19 @@ async def train_models(payload: TrainRequest, store: PredictionStore = Depends(g
             week=result.week,
             data_dir=str(payload.data_dir),
             model_dir=str(payload.model_dir),
-            meta={**result.model_metadata, "train_params": asdict(params)},
+            meta={
+                **result.model_metadata,
+                "train_params": asdict(params),
+                "earliest_train_season": payload.earliest_train_season,
+                "max_train_season": payload.max_train_season,
+                "val_season": payload.val_season,
+            },
         )
-        store.save_predictions(run_uuid, batch_uuid, result.scored, payload_cols=_default_output_columns(result.scored))
-    
+        store.save_predictions(
+            run_uuid,
+            batch_uuid,
+            result.scored,
+            payload_cols=_default_output_columns(result.scored),
+        )
+
     return store.get_batch_prediction(batch_uuid)

@@ -1,0 +1,37 @@
+.modal-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(8, 8, 10, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+
+.modal-dialog {
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+    width: min(600px, 100%);
+    min-height: 400px;
+}
+
+.modal-dialog-header {
+    padding: 18px 18px 12px 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-dialog-title {
+    margin: 0;
+    font-size: 20px;
+}
+
+.modal-dialog-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}

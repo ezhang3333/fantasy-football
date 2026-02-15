@@ -1,8 +1,12 @@
 Goals In Priority:
 
-2. Did all the backend for valid season and stuff but im pretty sure you can just pull it from the constants.py file called season_to_extract
-3. Make sure that validatio season is extracted from constants.py or at least maybe some other same way and expose what week you want to train up until and what week you want to predict on
-4. When the numbers are too big in card view, it forces them to be larger than 1 line
+1. Dataset Extract button modal dialog needs adjusting and also the extract season button seems to work but test its full functionality and make sure pipeline_data/final csvs get updated
+2. The validation, earliest train, and latest train season filters dont get udpated when we extract new Dataset
+3. Think about reworking the ui makeup of the training paramtere filters
+4. Try to abstract the react code in app.jsx the most: 1 way I can think of is creating a Dataset Modal Dialog that extracts Modal Dialog
+   and then you can put that element inside the App.jsx
+5. Also getting a backend error when extracting dataset when i tried ot extract data before 2016...maybe the dataset is not clean in the datapipeline
+
 4. Think about maybe also exposing how many prev weeks you want to extract and how many weeks to predict for future
 2. Expose the metadata in the model outputs page in like a side bar for users to see
 3. Reset filter button and also each page should have memory of its last used filters

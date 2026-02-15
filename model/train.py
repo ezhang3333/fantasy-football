@@ -16,6 +16,8 @@ def main() -> None:
     parser.add_argument("--positions", default="QB,RB,WR,TE", help="Comma-separated: QB,RB,WR,TE")
     parser.add_argument("--data-dir", default="pipeline_data/final", help="Path to finalized CSVs")
     parser.add_argument("--out-dir", default="model/artifacts", help="Where to save models and metadata")
+    parser.add_argument("--earliest-train-season", type=int, required=True, help="Earliest season to include in training")
+    parser.add_argument("--max-train-season", type=int, required=True, help="Latest season to include in training")
     parser.add_argument("--val-season", type=int, required=True, help="Season to use as validation")
     args = parser.parse_args()
 
@@ -24,7 +26,14 @@ def main() -> None:
 
     for position in _parse_positions(args.positions):
         df = load_final_dataset(args.data_dir, position)
-        trained = train_xgb_regressor(position, df, out_dir, val_season=args.val_season)
+        trained = train_xgb_regressor(
+            position,
+            df,
+            out_dir,
+            earliest_train_season=args.earliest_train_season,
+            max_train_season=args.max_train_season,
+            val_season=args.val_season,
+        )
         print(f"[{position}] saved: {trained.model_path} ({trained.metadata_path})")
 
 

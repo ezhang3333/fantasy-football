@@ -1,14 +1,17 @@
-import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Funnel, History, LoaderPinwheel, Variable } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, Database, Funnel, History, LoaderPinwheel, Variable } from "lucide-react";
 import "./css/App.css";
 import NumberFilter from "./NumberFilter.jsx";
 import DropdownFilter from "./DropdownFilter.jsx";
 import HistoryListItem from "./HistoryListItem.jsx";
+import ModalDialog from "./ModalDialog.jsx";
 import {
-  trainModel,
-  listBatches,
   getBatchPredictions,
-  listValidValSeasons,
+  getRefreshOptions,
+  getTrainRangeOptions,
+  listBatches,
+  refreshDataset,
+  trainModel,
 } from "./api/prediction.js";
 import { MODEL_FILTERS, TRAINABLE_POSITIONS } from "./constants.js";
 import { formatOneDecimal, getRowKey } from "./util.js";
@@ -41,8 +44,15 @@ export default function App() {
   const [selectedBatchId, setSelectedBatchId] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [selectedTrainPositions, setSelectedTrainPositions] = useState(TRAINABLE_POSITIONS);
-  const [availableValSeasons, setAvailableValSeasons] = useState([]);
+  const [availableSeasons, setAvailableSeasons] = useState([]);
+  const [earliestTrainSeason, setEarliestTrainSeason] = useState("");
+  const [maxTrainSeason, setMaxTrainSeason] = useState("");
   const [valSeason, setValSeason] = useState("");
+  const [isRefreshModalOpen, setIsRefreshModalOpen] = useState(false);
+  const [isRefreshingDataset, setIsRefreshingDataset] = useState(false);
+  const [refreshAvailableSeasons, setRefreshAvailableSeasons] = useState([]);
+  const [refreshEarliestSeason, setRefreshEarliestSeason] = useState("");
+  const [refreshLatestSeason, setRefreshLatestSeason] = useState("");
   const [sidebarSections, setSidebarSections] = useState(() => {
     try {
       const raw = window.localStorage.getItem(SIDEBAR_SECTIONS_STORAGE_KEY);
@@ -79,31 +89,87 @@ export default function App() {
     loadHistoryListOnStart();
   }, []);
 
-  useEffect(() => {
-    const loadValidationSeasons = async () => {
-      const selectedPositions = selectedTrainPositions.length > 0 ? selectedTrainPositions : undefined;
-      const response = await listValidValSeasons(selectedPositions);
-      const seasons = Array.isArray(response?.seasons)
-        ? response.seasons.map((season) => String(season))
-        : [];
-      const sortedSeasons = seasons.sort((a, b) => Number(a) - Number(b));
-      setAvailableValSeasons(sortedSeasons);
-      setValSeason((previousValue) => {
-        if (sortedSeasons.length === 0) {
-          return "";
-        }
-        if (previousValue && sortedSeasons.includes(previousValue)) {
-          return previousValue;
-        }
-        return sortedSeasons[sortedSeasons.length - 1];
-      });
-    };
+  const seasonOptionsForDropdown = useMemo(
+    () => availableSeasons.map((season) => ({ value: season, label: season })),
+    [availableSeasons]
+  );
+  const maxTrainAllowedSeason =
+    availableSeasons.length > 1 ? availableSeasons[availableSeasons.length - 2] : "";
 
-    loadValidationSeasons().catch(() => {
-      setAvailableValSeasons([]);
+  const earliestTrainOptions =
+    availableSeasons.length > 1
+      ? seasonOptionsForDropdown.filter((option) => Number(option.value) <= Number(maxTrainAllowedSeason))
+      : [{ value: "", label: "No seasons available" }];
+
+  const latestTrainOptions =
+    availableSeasons.length > 1 && earliestTrainSeason
+      ? seasonOptionsForDropdown.filter(
+          (option) =>
+            Number(option.value) >= Number(earliestTrainSeason) &&
+            Number(option.value) <= Number(maxTrainAllowedSeason)
+        )
+      : [{ value: "", label: "No seasons available" }];
+
+  const valSeasonOptions =
+    availableSeasons.length > 1 && maxTrainSeason
+      ? seasonOptionsForDropdown.filter((option) => Number(option.value) > Number(maxTrainSeason))
+      : [{ value: "", label: "No seasons available" }];
+
+  const refreshSeasonOptions = refreshAvailableSeasons.map((season) => ({
+    value: season,
+    label: season,
+  }));
+
+  const loadTrainOptions = async () => {
+    const selectedPositions = selectedTrainPositions.length > 0 ? selectedTrainPositions : undefined;
+    const response = await getTrainRangeOptions(selectedPositions);
+    const seasons = Array.isArray(response?.available_seasons)
+      ? response.available_seasons.map((season) => String(season)).sort((a, b) => Number(a) - Number(b))
+      : [];
+    setAvailableSeasons(seasons);
+
+    if (seasons.length < 2) {
+      setEarliestTrainSeason("");
+      setMaxTrainSeason("");
+      setValSeason("");
+      return;
+    }
+
+    const defaultEarliest = String(response?.min_available_season ?? seasons[0]);
+    const defaultMaxTrain = String(response?.default_max_train_season ?? seasons[seasons.length - 2]);
+    const defaultVal = String(response?.max_available_season ?? seasons[seasons.length - 1]);
+
+    setEarliestTrainSeason(defaultEarliest);
+    setMaxTrainSeason(defaultMaxTrain);
+    setValSeason(defaultVal);
+  };
+
+  const loadRefreshOptions = async () => {
+    const response = await getRefreshOptions();
+    const seasons = Array.isArray(response?.configured_seasons)
+      ? response.configured_seasons.map((season) => String(season)).sort((a, b) => Number(a) - Number(b))
+      : [];
+    setRefreshAvailableSeasons(seasons);
+    setRefreshEarliestSeason(String(response?.default_earliest_season ?? seasons[0] ?? ""));
+    setRefreshLatestSeason(String(response?.default_latest_season ?? seasons[seasons.length - 1] ?? ""));
+  };
+
+  useEffect(() => {
+    loadTrainOptions().catch(() => {
+      setAvailableSeasons([]);
+      setEarliestTrainSeason("");
+      setMaxTrainSeason("");
       setValSeason("");
     });
   }, [selectedTrainPositions]);
+
+  useEffect(() => {
+    loadRefreshOptions().catch(() => {
+      setRefreshAvailableSeasons([]);
+      setRefreshEarliestSeason("");
+      setRefreshLatestSeason("");
+    });
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem(SIDEBAR_SECTIONS_STORAGE_KEY, JSON.stringify(sidebarSections));
@@ -134,7 +200,43 @@ export default function App() {
   const canTrain =
     !isTraining &&
     selectedTrainPositions.length > 0 &&
-    availableValSeasons.includes(valSeason);
+    earliestTrainSeason !== "" &&
+    maxTrainSeason !== "" &&
+    valSeason !== "" &&
+    valSeasonOptions.some((option) => option.value === valSeason) &&
+    Number(earliestTrainSeason) <= Number(maxTrainSeason) &&
+    Number(valSeason) > Number(maxTrainSeason);
+
+  const handleEarliestTrainSeasonChange = (_, value) => {
+    setEarliestTrainSeason(value);
+    if (!maxTrainAllowedSeason) {
+      setMaxTrainSeason("");
+      setValSeason("");
+      return;
+    }
+
+    let nextMaxTrain = maxTrainSeason;
+    if (!nextMaxTrain || Number(nextMaxTrain) < Number(value)) {
+      nextMaxTrain = value;
+    }
+    if (Number(nextMaxTrain) > Number(maxTrainAllowedSeason)) {
+      nextMaxTrain = maxTrainAllowedSeason;
+    }
+    setMaxTrainSeason(nextMaxTrain);
+
+    if (!valSeason || Number(valSeason) <= Number(nextMaxTrain)) {
+      const highestVal = availableSeasons[availableSeasons.length - 1] ?? "";
+      setValSeason(Number(highestVal) > Number(nextMaxTrain) ? highestVal : "");
+    }
+  };
+
+  const handleMaxTrainSeasonChange = (_, value) => {
+    setMaxTrainSeason(value);
+    if (!valSeason || Number(valSeason) <= Number(value)) {
+      const highestVal = availableSeasons[availableSeasons.length - 1] ?? "";
+      setValSeason(Number(highestVal) > Number(value) ? highestVal : "");
+    }
+  };
 
   const handleTrain = async () => {
     if (!canTrain) {
@@ -146,6 +248,8 @@ export default function App() {
 
     const payload = {
       positions: selectedTrainPositions,
+      earliest_train_season: Number(earliestTrainSeason),
+      max_train_season: Number(maxTrainSeason),
       val_season: Number(valSeason),
       n_estimators: Number(params.n_estimators),
       learning_rate: Number(params.learning_rate),
@@ -163,6 +267,39 @@ export default function App() {
       setTrainError(e.message);
     } finally {
       setIsTraining(false);
+    }
+  };
+
+  const handleRefreshEarliestChange = (_, value) => {
+    setRefreshEarliestSeason(value);
+    if (refreshLatestSeason && Number(value) > Number(refreshLatestSeason)) {
+      setRefreshLatestSeason(value);
+    }
+  };
+
+  const handleRefreshLatestChange = (_, value) => {
+    setRefreshLatestSeason(value);
+    if (refreshEarliestSeason && Number(value) < Number(refreshEarliestSeason)) {
+      setRefreshEarliestSeason(value);
+    }
+  };
+
+  const handleExtractDataset = async () => {
+    if (!refreshEarliestSeason || !refreshLatestSeason) {
+      return;
+    }
+    setIsRefreshingDataset(true);
+    try {
+      await refreshDataset({
+        earliest_season: Number(refreshEarliestSeason),
+        latest_season: Number(refreshLatestSeason),
+      });
+      await loadTrainOptions();
+      setIsRefreshModalOpen(false);
+    } catch (e) {
+      setTrainError(e.message);
+    } finally {
+      setIsRefreshingDataset(false);
     }
   };
 
@@ -195,10 +332,6 @@ export default function App() {
   const hasOutputs = modelOutputs.length > 0;
   const hasFilteredResults = filteredResults.length > 0;
   const isInitialEmptyState = !hasOutputs;
-  const valSeasonOptions =
-    availableValSeasons.length > 0
-      ? availableValSeasons.map((season) => ({ value: season, label: season }))
-      : [{ value: "", label: "No seasons available" }];
 
   const handleLoadLatestBatch = async () => {
     if (listBatchPredictions.length === 0) {
@@ -324,6 +457,34 @@ export default function App() {
               </div>
             </div>
             <div className="sidebar-section validation-season-section">
+              <div className="validation-season-title">Earliest Train Season</div>
+              <DropdownFilter
+                id="earliest-train-season"
+                name="earliest_train_season"
+                label=""
+                value={earliestTrainSeason}
+                onChange={handleEarliestTrainSeasonChange}
+                options={earliestTrainOptions}
+                containerClassName="sidebar-dropdown-container"
+                labelClassName="sidebar-dropdown-label"
+                selectClassName="sidebar-dropdown-select"
+              />
+            </div>
+            <div className="sidebar-section validation-season-section">
+              <div className="validation-season-title">Latest Train Season</div>
+              <DropdownFilter
+                id="latest-train-season"
+                name="max_train_season"
+                label=""
+                value={maxTrainSeason}
+                onChange={handleMaxTrainSeasonChange}
+                options={latestTrainOptions}
+                containerClassName="sidebar-dropdown-container"
+                labelClassName="sidebar-dropdown-label"
+                selectClassName="sidebar-dropdown-select"
+              />
+            </div>
+            <div className="sidebar-section validation-season-section">
               <div className="validation-season-title">Validation Season</div>
               <DropdownFilter
                 id="validation-season"
@@ -398,21 +559,33 @@ export default function App() {
             </div>
             <div className="output-subtitle">Gradient Boosted Tree Model</div>
           </div>
-          <div className="view-toggle">
+          <div className="output-header-actions">
             <button
-              className={`toggle-button ${viewMode === "list" ? "active" : ""}`}
+              className="dataset-refresh-button"
               type="button"
-              onClick={() => setViewMode("list")}
+              onClick={() => {
+                setIsRefreshModalOpen(true);
+              }}
             >
-              List
+              <Database size={14} />
+              <span>Dataset Refresh</span>
             </button>
-            <button
-              className={`toggle-button ${viewMode === "grid" ? "active" : ""}`}
-              type="button"
-              onClick={() => setViewMode("grid")}
-            >
-              Grid
-            </button>
+            <div className="view-toggle">
+              <button
+                className={`toggle-button ${viewMode === "list" ? "active" : ""}`}
+                type="button"
+                onClick={() => setViewMode("list")}
+              >
+                List
+              </button>
+              <button
+                className={`toggle-button ${viewMode === "grid" ? "active" : ""}`}
+                type="button"
+                onClick={() => setViewMode("grid")}
+              >
+                Grid
+              </button>
+            </div>
           </div>
         </div>
 
@@ -668,6 +841,65 @@ export default function App() {
           </>
         )}
       </div>
+      <ModalDialog
+        open={isRefreshModalOpen}
+        title="Dataset Refresh"
+        onClose={() => setIsRefreshModalOpen(false)}
+      >
+        <div className="dataset-modal-copy">
+          Refreshing data overwrites files in <code>pipeline_data/*</code>. Training outputs may change
+          after extraction completes.
+        </div>
+        <div className="dataset-modal-body">
+          <div className="sidebar-section validation-season-section">
+            <div className="validation-season-title">Earliest Season to Extract</div>
+            <DropdownFilter
+              id="refresh-earliest-season"
+              name="refresh_earliest_season"
+              label=""
+              value={refreshEarliestSeason}
+              onChange={handleRefreshEarliestChange}
+              options={refreshSeasonOptions}
+              containerClassName="sidebar-dropdown-container"
+              labelClassName="sidebar-dropdown-label"
+              selectClassName="sidebar-dropdown-select"
+            />
+          </div>
+          <div className="sidebar-section validation-season-section">
+            <div className="validation-season-title">Latest Season to Extract</div>
+            <DropdownFilter
+              id="refresh-latest-season"
+              name="refresh_latest_season"
+              label=""
+              value={refreshLatestSeason}
+              onChange={handleRefreshLatestChange}
+              options={refreshSeasonOptions}
+              containerClassName="sidebar-dropdown-container"
+              labelClassName="sidebar-dropdown-label"
+              selectClassName="sidebar-dropdown-select"
+            />
+          </div>
+        </div>
+        <div className="dataset-modal-footer">
+          <button
+            type="button"
+            className="empty-button secondary"
+            onClick={() => setIsRefreshModalOpen(false)}
+            disabled={isRefreshingDataset}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="empty-button primary"
+            onClick={handleExtractDataset}
+            disabled={isRefreshingDataset || !refreshEarliestSeason || !refreshLatestSeason}
+          >
+            {isRefreshingDataset ? "Extracting..." : "Extract"}
+          </button>
+        </div>
+      </ModalDialog>
     </div>
   );
 }
+

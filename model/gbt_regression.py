@@ -62,6 +62,63 @@ def time_split_by_season(df: pd.DataFrame, val_season: int) -> tuple[pd.DataFram
     return train_df, val_df, val_season
 
 
+def split_by_train_range_and_val_season(
+    df: pd.DataFrame,
+    *,
+    earliest_train_season: int,
+    max_train_season: int,
+    val_season: int,
+) -> tuple[pd.DataFrame, pd.DataFrame, int]:
+    season_num = pd.to_numeric(df["season"], errors="coerce")
+    seasons = season_num.dropna().astype(int)
+    if seasons.empty:
+        raise ValueError("No valid `season` values found for time-based split.")
+
+    earliest_train_season = int(earliest_train_season)
+    max_train_season = int(max_train_season)
+    val_season = int(val_season)
+
+    if earliest_train_season > max_train_season:
+        raise ValueError(
+            "Invalid train season range: "
+            f"earliest_train_season={earliest_train_season} is greater than "
+            f"max_train_season={max_train_season}."
+        )
+    if val_season <= max_train_season:
+        raise ValueError(
+            f"Invalid val_season={val_season}. Validation season must be greater than "
+            f"max_train_season={max_train_season}."
+        )
+    if val_season not in set(seasons.tolist()):
+        raise ValueError(
+            f"Validation season is unavailable: val_season={val_season}. "
+            f"Available seasons: {sorted(set(seasons.tolist()))}"
+        )
+
+    season_int = season_num.astype("Int64")
+    train_mask = (
+        (season_int >= earliest_train_season) &
+        (season_int <= max_train_season)
+    ).fillna(False)
+    val_mask = (season_int == val_season).fillna(False)
+
+    train_df = df[train_mask].copy()
+    val_df = df[val_mask].copy()
+
+    if train_df.empty:
+        raise ValueError(
+            "Training split is empty "
+            f"(earliest_train_season={earliest_train_season}, "
+            f"max_train_season={max_train_season})."
+        )
+    if val_df.empty:
+        raise ValueError(
+            f"Validation split is empty (val_season={val_season})."
+        )
+
+    return train_df, val_df, val_season
+
+
 def make_feature_set(position: Position, target_col: str = "fantasy_next_4wk_avg") -> tuple[list[str], str]:
     stats = _stats_for_position(position)
     if target_col not in stats:
@@ -170,6 +227,8 @@ def train_xgb_regressor(
     df: pd.DataFrame,
     out_dir: str | Path,
     *,
+    earliest_train_season: int,
+    max_train_season: int,
     val_season: int,
     random_state: int = 7,
     params: XGBHyperParams | None = None,
@@ -177,7 +236,12 @@ def train_xgb_regressor(
     params = params or XGBHyperParams()
 
     feature_cols, target_col = make_feature_set(position)
-    train_df, val_df, val_season = time_split_by_season(df, val_season=val_season)
+    train_df, val_df, val_season = split_by_train_range_and_val_season(
+        df,
+        earliest_train_season=earliest_train_season,
+        max_train_season=max_train_season,
+        val_season=val_season,
+    )
 
     x_train_raw = _to_numeric_frame(train_df, feature_cols)
     y_train = pd.to_numeric(train_df[target_col], errors="coerce")
