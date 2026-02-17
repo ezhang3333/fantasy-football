@@ -847,8 +847,7 @@ export default function App() {
         onClose={() => setIsRefreshModalOpen(false)}
       >
         <div className="dataset-modal-copy">
-          Refreshing data overwrites files in <code>pipeline_data/*</code>. Training outputs may change
-          after extraction completes.
+          Training outputs may change after extraction completes.
         </div>
         <div className="dataset-modal-body">
           <div className="sidebar-section validation-season-section">

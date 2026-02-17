@@ -17,7 +17,7 @@
     flex-direction: column;
     box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
     width: min(600px, 100%);
-    min-height: 400px;
+    min-height: 300px;
 }
 
 .modal-dialog-header {
