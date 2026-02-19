@@ -55,11 +55,19 @@ export const getRefreshOptions = () => {
 };
 
 // POST /data/refresh
-export const refreshDataset = (payload) => {
+export const refreshDataset = (payload, options = {}) => {
   return fetchApi(`${apiBase}/data/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
+    signal: options.signal,
+  });
+};
+
+// POST /data/refresh/cancel
+export const cancelDatasetRefresh = () => {
+  return fetchApi(`${apiBase}/data/refresh/cancel`, {
+    method: "POST",
   });
 };
 

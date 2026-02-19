@@ -10,6 +10,7 @@ Goals In Priority:
 5. Cancel button should work when we are trying to extract
 6. Model paramters is default to open on startup like the initial localhost click and then also the number filters look bad
 5. Also getting a backend error when extracting dataset when i tried ot extract data before 2016...maybe the dataset is not clean in the datapipeline
+6. Containerize project and make sure can run on any machine
 
 4. Think about maybe also exposing how many prev weeks you want to extract and how many weeks to predict for future
 2. Expose the metadata in the model outputs page in like a side bar for users to see

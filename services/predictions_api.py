@@ -1,4 +1,6 @@
 from __future__ import annotations
+import asyncio
+import threading
 from dataclasses import asdict
 from enum import Enum
 from functools import lru_cache
@@ -10,7 +12,7 @@ from constants import ALL_POSITIONS, DB_PATH, SEASONS_TO_EXTRACT
 from model.database import PredictionStore
 from model.gbt_regression import XGBHyperParams, load_final_dataset, train_xgb_regressor
 from model.predict import _default_output_columns, predict_position
-from nfl_pipeline import NFLDataPipeline
+from nfl_pipeline import DatasetRefreshCancelled, NFLDataPipeline
 
 
 class Position(str, Enum):
@@ -30,6 +32,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_refresh_state_lock = threading.Lock()
+_refresh_cancel_event = threading.Event()
+_refresh_in_progress = False
 
 @lru_cache(maxsize=1)
 def _store() -> PredictionStore:
@@ -192,6 +198,7 @@ async def get_data_refresh_options():
 
 @app.post("/data/refresh")
 async def refresh_dataset(payload: RefreshDatasetRequest):
+    global _refresh_in_progress
     seasons = _parse_extract_seasons()
     min_allowed = min(seasons)
     max_allowed = max(seasons)
@@ -216,18 +223,62 @@ async def refresh_dataset(payload: RefreshDatasetRequest):
 
     requested_seasons = [str(season) for season in range(payload.earliest_season, payload.latest_season + 1)]
 
-    pipeline = NFLDataPipeline(requested_seasons)
-    pipeline.run_pipeline(
-        save_extracted=True,
-        save_cleaned=True,
-        save_final=True,
-        out_dir="pipeline_data",
-    )
+    with _refresh_state_lock:
+        if _refresh_in_progress:
+            raise HTTPException(
+                status_code=409,
+                detail="A dataset refresh is already in progress.",
+            )
+        _refresh_in_progress = True
+        _refresh_cancel_event.clear()
+
+    pipeline = NFLDataPipeline(requested_seasons, cancel_requested=_refresh_cancel_event.is_set)
+    try:
+        await asyncio.to_thread(
+            pipeline.run_pipeline,
+            save_extracted=True,
+            save_cleaned=True,
+            save_final=True,
+            out_dir="pipeline_data",
+        )
+    except DatasetRefreshCancelled:
+        return {
+            "status": "cancelled",
+            "message": "Dataset refresh cancelled.",
+            "seasons_extracted": requested_seasons,
+        }
+    except RuntimeError as exc:
+        if "cancelled by user" in str(exc).lower():
+            return {
+                "status": "cancelled",
+                "message": "Dataset refresh cancelled.",
+                "seasons_extracted": requested_seasons,
+            }
+        raise
+    finally:
+        with _refresh_state_lock:
+            _refresh_in_progress = False
+            _refresh_cancel_event.clear()
 
     return {
         "status": "ok",
         "message": "Dataset refresh completed.",
         "seasons_extracted": requested_seasons,
+    }
+
+
+@app.post("/data/refresh/cancel")
+async def cancel_dataset_refresh():
+    with _refresh_state_lock:
+        if not _refresh_in_progress:
+            return {
+                "status": "idle",
+                "message": "No dataset refresh is currently running.",
+            }
+        _refresh_cancel_event.set()
+    return {
+        "status": "cancelling",
+        "message": "Dataset refresh cancellation requested.",
     }
 
 

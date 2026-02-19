@@ -12,15 +12,25 @@ from data_cleaners.positions.te_cleaner import TECleaner
 from data_finalizers.te_finalizer import TEFinalizer
 import pandas as pd
 
+
+class DatasetRefreshCancelled(Exception):
+    pass
+
+
 class NFLDataPipeline:
-    def __init__(self, seasons):
+    def __init__(self, seasons, cancel_requested=None):
         self.seasons = seasons
+        self.cancel_requested = cancel_requested
         self.POS_REGISTRY = {
             "QB": ("calculate_def_vs_qb", QBCleaner, QBFinalizer),
             "RB": ("calculate_def_vs_rb", RBCleaner, RBFinalizer),
             "WR": ("calculate_def_vs_wr", WRCleaner, WRFinalizer),
             "TE": ("calculate_def_vs_te", TECleaner, TEFinalizer),
         }
+
+    def _check_cancel(self):
+        if self.cancel_requested and self.cancel_requested():
+            raise DatasetRefreshCancelled("Dataset refresh cancelled by user.")
 
     def run_pipeline(
         self, 
@@ -31,18 +41,22 @@ class NFLDataPipeline:
         out_dir="pipeline_data"
     ):
         positions = [pos.upper() for pos in positions]
+        self._check_cancel()
 
-        nfl_read_extractor = NFLReadExtractor(self.seasons)
+        nfl_read_extractor = NFLReadExtractor(self.seasons, cancel_requested=self.cancel_requested)
         raw_data = nfl_read_extractor.get_all_data()
+        self._check_cancel()
 
         nfl_read_cleaner = NFLReadCleaner(raw_data)
         merged_data = nfl_read_cleaner.merge_data_to_player_weeks()
+        self._check_cancel()
 
-        nfl_web_scraper = NFLWebScraper()
+        nfl_web_scraper = NFLWebScraper(cancel_requested=self.cancel_requested)
         try:
             pfr_def_vs_dict = nfl_web_scraper.pfr_scrape_def_vs_many_stats(self.seasons, positions=positions)
         finally:
             nfl_web_scraper.close()
+        self._check_cancel()
 
         pfr_cleaner = PFRCleaner()
 
@@ -52,6 +66,7 @@ class NFLDataPipeline:
         datasets_by_pos = {}
 
         for pos in positions:
+            self._check_cancel()
             pfr_cleaner_def_vs_method_name, CleanerClass, FinalizerClass = self.POS_REGISTRY[pos]
 
             # pasing method by reference

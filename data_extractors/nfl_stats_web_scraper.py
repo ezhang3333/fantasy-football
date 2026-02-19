@@ -30,8 +30,9 @@ adv_def_stats : [
     ]
 """
 class NFLWebScraper:
-    def __init__(self):
+    def __init__(self, cancel_requested=None):
         self.year = get_current_season()
+        self.cancel_requested = cancel_requested
 
         options = Options()
         options.add_argument("--headless=new")
@@ -48,6 +49,10 @@ class NFLWebScraper:
         # so we get a Selenium TimeoutException instead of an urllib3 ReadTimeoutError.
         self.driver.set_page_load_timeout(90)
         self.driver.set_script_timeout(90)
+
+    def _check_cancel(self):
+        if self.cancel_requested and self.cancel_requested():
+            raise RuntimeError("Dataset refresh cancelled by user.")
 
     def close(self):
         if self.driver:
@@ -71,10 +76,12 @@ class NFLWebScraper:
         self.driver.set_script_timeout(90)
     
     def pfr_scrape_def_vs_stats(self, year, position):
+        self._check_cancel()
         capitalized_position = position.upper()
         pfr_team_def_url = f'https://www.pro-football-reference.com/years/{year}/fantasy-points-against-{capitalized_position}.htm'
 
         for attempt in range(3):
+            self._check_cancel()
             try:
                 self.driver.get(pfr_team_def_url)
                 break
@@ -91,6 +98,7 @@ class NFLWebScraper:
         except TimeoutException:
             pass
 
+        self._check_cancel()
         html = self.driver.page_source
         def_vs_stats_uncleaned = self.extract_pfr_table(html, "div_fantasy_def", "fantasy_def")
 
@@ -101,12 +109,14 @@ class NFLWebScraper:
         return def_vs_stats
     
     def pfr_scrape_def_vs_many_stats(self, seasons, positions=["QB", "RB", 'WR', "TE"]):
+        self._check_cancel()
         seasons = [int(s) for s in seasons]
         positions = [p.upper() for p in positions]
         def_vs_dict_unflattened = {pos : [] for pos in positions}
 
         for pos in positions:
             for year in seasons:
+                self._check_cancel()
                 def_vs_stats = self.pfr_scrape_def_vs_stats(year, pos)
 
                 if def_vs_stats.empty or def_vs_stats is None:
@@ -117,6 +127,7 @@ class NFLWebScraper:
         
         def_vs_dict = {}
         for pos in positions:
+            self._check_cancel()
             def_vs_dict[pos] = pd.concat(def_vs_dict_unflattened[pos], ignore_index=True)
 
         return def_vs_dict
