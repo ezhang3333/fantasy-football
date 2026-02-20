@@ -52,10 +52,7 @@ class NFLDataPipeline:
         self._check_cancel()
 
         nfl_web_scraper = NFLWebScraper(cancel_requested=self.cancel_requested)
-        try:
-            pfr_def_vs_dict = nfl_web_scraper.pfr_scrape_def_vs_many_stats(self.seasons, positions=positions)
-        finally:
-            nfl_web_scraper.close()
+        pfr_def_vs_dict = nfl_web_scraper.pfr_scrape_def_vs_many_stats(self.seasons, positions=positions)
         self._check_cancel()
 
         pfr_cleaner = PFRCleaner()

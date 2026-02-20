@@ -1,6 +1,7 @@
 Goals In Priority:
 
 1. pfr scrape def-vs-many stats function with later seasons not working check why
+2. Handle the dataset refresh canceling with proper async version
 1. Dataset refresh extraction button takes way to long and not sure if it can even scuceed
 1. Dataset Extract button modal dialog needs adjusting and also the extract season button seems to work but test its full functionality and make sure pipeline_data/final csvs get updated
 2. The validation, earliest train, and latest train season filters dont get udpated when we extract new Dataset

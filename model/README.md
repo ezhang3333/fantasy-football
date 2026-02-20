@@ -8,10 +8,12 @@ From your venv:
 
 ```powershell
 pip install -r model/requirements.txt
+scrapling install
 ```
 
 Notes:
 - This repo already uses `pandas`/`numpy` elsewhere; `model/requirements.txt` intentionally doesn’t pin them to avoid dependency conflicts.
+- `scrapling install` is required for browser/fetcher assets used by the PFR web scraper in the data pipeline.
 
 ## Train
 
