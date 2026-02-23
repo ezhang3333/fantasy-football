@@ -20,9 +20,8 @@ adv_def_stats : [
     ]
 """
 class NFLWebScraper:
-    def __init__(self, cancel_requested=None):
+    def __init__(self):
         self.year = get_current_season()
-        self.cancel_requested = cancel_requested
     
     def pfr_scrape_def_vs_many_stats(self, seasons, positions=["QB", "RB", 'WR', "TE"]):
         seasons = [int(s) for s in seasons]

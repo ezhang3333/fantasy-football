@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Database, Funnel, History, LoaderPinwheel, Variable } from "lucide-react";
 import "./css/App.css";
 import NumberFilter from "./NumberFilter.jsx";
@@ -7,7 +7,6 @@ import HistoryListItem from "./HistoryListItem.jsx";
 import ModalDialog from "./ModalDialog.jsx";
 import {
   getBatchPredictions,
-  cancelDatasetRefresh,
   getRefreshOptions,
   getTrainRangeOptions,
   listBatches,
@@ -51,11 +50,9 @@ export default function App() {
   const [valSeason, setValSeason] = useState("");
   const [isRefreshModalOpen, setIsRefreshModalOpen] = useState(false);
   const [isRefreshingDataset, setIsRefreshingDataset] = useState(false);
-  const [isCancellingDatasetRefresh, setIsCancellingDatasetRefresh] = useState(false);
   const [refreshAvailableSeasons, setRefreshAvailableSeasons] = useState([]);
   const [refreshEarliestSeason, setRefreshEarliestSeason] = useState("");
   const [refreshLatestSeason, setRefreshLatestSeason] = useState("");
-  const refreshAbortControllerRef = useRef(null);
   const [sidebarSections, setSidebarSections] = useState(() => {
     try {
       const raw = window.localStorage.getItem(SIDEBAR_SECTIONS_STORAGE_KEY);
@@ -291,44 +288,20 @@ export default function App() {
     if (!refreshEarliestSeason || !refreshLatestSeason) {
       return;
     }
-    const controller = new AbortController();
-    refreshAbortControllerRef.current = controller;
     setIsRefreshingDataset(true);
-    setIsCancellingDatasetRefresh(false);
     try {
       const response = await refreshDataset({
         earliest_season: Number(refreshEarliestSeason),
         latest_season: Number(refreshLatestSeason),
-      }, { signal: controller.signal });
+      });
       if (response?.status === "ok") {
         await loadTrainOptions();
       }
       setIsRefreshModalOpen(false);
     } catch (e) {
-      if (e?.name === "AbortError") {
-        return;
-      }
       setTrainError(e.message);
     } finally {
       setIsRefreshingDataset(false);
-      setIsCancellingDatasetRefresh(false);
-      refreshAbortControllerRef.current = null;
-    }
-  };
-
-  const handleCancelDatasetRefresh = async () => {
-    if (!isRefreshingDataset) {
-      setIsRefreshModalOpen(false);
-      return;
-    }
-    setIsCancellingDatasetRefresh(true);
-    try {
-      await cancelDatasetRefresh();
-    } catch (e) {
-      setTrainError(e.message);
-    } finally {
-      refreshAbortControllerRef.current?.abort();
-      setIsRefreshModalOpen(false);
     }
   };
 
@@ -873,7 +846,7 @@ export default function App() {
       <ModalDialog
         open={isRefreshModalOpen}
         title="Dataset Refresh"
-        onClose={handleCancelDatasetRefresh}
+        onClose={() => setIsRefreshModalOpen(false)}
       >
         <div className="dataset-modal-copy">
           Training outputs may change after extraction completes.
@@ -912,16 +885,16 @@ export default function App() {
           <button
             type="button"
             className="empty-button secondary"
-            onClick={handleCancelDatasetRefresh}
-            disabled={isCancellingDatasetRefresh}
+            onClick={() => setIsRefreshModalOpen(false)}
+            disabled={isRefreshingDataset}
           >
-            {isCancellingDatasetRefresh ? "Cancelling..." : "Cancel"}
+            Cancel
           </button>
           <button
             type="button"
             className="empty-button primary"
             onClick={handleExtractDataset}
-            disabled={isRefreshingDataset || isCancellingDatasetRefresh || !refreshEarliestSeason || !refreshLatestSeason}
+            disabled={isRefreshingDataset || !refreshEarliestSeason || !refreshLatestSeason}
           >
             {isRefreshingDataset ? "Extracting..." : "Extract"}
           </button>

@@ -5,9 +5,8 @@ from services.espn_api import get_current_season
 
 
 class NFLReadExtractor:
-    def __init__(self, seasons, cancel_requested=None):
+    def __init__(self, seasons):
         self.seasons = [int(s) for s in seasons]
-        self.cancel_requested = cancel_requested
         self.default_positions = ['QB', 'RB', 'WR', 'TE']
 
         self.keep = {
@@ -142,12 +141,7 @@ class NFLReadExtractor:
             ],
         }
 
-    def _check_cancel(self):
-        if self.cancel_requested and self.cancel_requested():
-            raise RuntimeError("Dataset refresh cancelled by user.")
-    
     def get_all_data(self):
-        self._check_cancel()
         return {
             'player_stats': self.load_player_stats(),
             'team_stats': self.load_team_stats(),
@@ -162,24 +156,20 @@ class NFLReadExtractor:
         
 
     def load_player_stats(self):
-        self._check_cancel()
         player_stats = nfl_rp.load_player_stats(self.seasons, 'reg').to_pandas()
         player_stats = player_stats.reindex(columns=self.keep["player_stats"])
         player_stats = player_stats[player_stats["position"].isin(self.default_positions)]
         return player_stats
 
     def load_team_stats(self):
-        self._check_cancel()
         team_stats = nfl_rp.load_team_stats(self.seasons, 'reg').to_pandas()
         return team_stats.reindex(columns=self.keep["team_stats"])
 
     def load_schedules(self):
-        self._check_cancel()
         schedules = nfl_rp.load_schedules(self.seasons).to_pandas()
         return schedules.reindex(columns=self.keep["schedules"])
 
     def load_players(self):
-        self._check_cancel()
         players = nfl_rp.load_players().to_pandas()
         players = players[
             (players['position'].isin(self.default_positions)) &
@@ -188,12 +178,10 @@ class NFLReadExtractor:
         return players.reindex(columns=self.keep["players"])
 
     def load_rosters(self):
-        self._check_cancel()
         rosters = nfl_rp.load_rosters(self.seasons).to_pandas()
         return rosters.reindex(columns=self.keep["rosters"])
 
     def load_rosters_weekly(self):
-        self._check_cancel()
         rosters_weekly = nfl_rp.load_rosters_weekly(self.seasons).to_pandas()
         rosters_weekly = rosters_weekly[
             (rosters_weekly['position'].isin(self.default_positions)) &
@@ -201,18 +189,15 @@ class NFLReadExtractor:
         return rosters_weekly.reindex(columns=self.keep["rosters_weekly"])
 
     def load_snap_counts(self):
-        self._check_cancel()
         snap_counts = nfl_rp.load_snap_counts(self.seasons).to_pandas()
         snap_counts = snap_counts[snap_counts['position'].isin(self.default_positions)]
         return snap_counts.reindex(columns=self.keep["snap_counts"])
 
     def load_nextgen_stats(self):
-        self._check_cancel()
         frames = []
         for cat, key in [("passing","nextgen_passing"),
                          ("rushing","nextgen_rushing"),
                          ("receiving","nextgen_receiving")]:
-            self._check_cancel()
             d = nfl_rp.load_nextgen_stats(self.seasons, cat).to_pandas()
             d = d.reindex(columns=self.keep[key])
             d["stat_category"] = cat
@@ -220,6 +205,5 @@ class NFLReadExtractor:
         return pd.concat(frames, ignore_index=True)
 
     def load_ff_opportunity(self):
-        self._check_cancel()
         ff_opportunity = nfl_rp.load_ff_opportunity(self.seasons, "weekly", "latest").to_pandas()
         return ff_opportunity.reindex(columns=self.keep["ff_opportunity"])
