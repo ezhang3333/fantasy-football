@@ -4,7 +4,7 @@ DB_PATH = str((Path(__file__).resolve().parent / "model" / "outputs" / "predicti
 
 ALL_POSITIONS = ["QB", "RB", "WR", "TE"]
 
-SEASONS_TO_EXTRACT = ["2025", "2024", "2023", "2022", "2021"]
+SEASONS_TO_EXTRACT = ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016"]
 
 TEAM_NAME_TO_ABBR = {
     "Arizona Cardinals": "ARI",

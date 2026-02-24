@@ -16,10 +16,9 @@ import {
 import { MODEL_FILTERS, TRAINABLE_POSITIONS } from "./constants.js";
 import { formatOneDecimal, getRowKey } from "./util.js";
 
-const SIDEBAR_SECTIONS_STORAGE_KEY = "ff.sidebar.sections.v1";
 const DEFAULT_SIDEBAR_SECTIONS = {
   model: false,
-  training: true,
+  training: false,
   history: true,
 };
 
@@ -53,29 +52,7 @@ export default function App() {
   const [refreshAvailableSeasons, setRefreshAvailableSeasons] = useState([]);
   const [refreshEarliestSeason, setRefreshEarliestSeason] = useState("");
   const [refreshLatestSeason, setRefreshLatestSeason] = useState("");
-  const [sidebarSections, setSidebarSections] = useState(() => {
-    try {
-      const raw = window.localStorage.getItem(SIDEBAR_SECTIONS_STORAGE_KEY);
-      if (!raw) {
-        return DEFAULT_SIDEBAR_SECTIONS;
-      }
-      const parsed = JSON.parse(raw);
-      return {
-        model:
-          typeof parsed?.model === "boolean" ? parsed.model : DEFAULT_SIDEBAR_SECTIONS.model,
-        training:
-          typeof parsed?.training === "boolean"
-            ? parsed.training
-            : DEFAULT_SIDEBAR_SECTIONS.training,
-        history:
-          typeof parsed?.history === "boolean"
-            ? parsed.history
-            : DEFAULT_SIDEBAR_SECTIONS.history,
-      };
-    } catch {
-      return DEFAULT_SIDEBAR_SECTIONS;
-    }
-  });
+  const [sidebarSections, setSidebarSections] = useState(DEFAULT_SIDEBAR_SECTIONS);
 
   useEffect(() => {
     const loadHistoryListOnStart = async () => {
@@ -170,10 +147,6 @@ export default function App() {
       setRefreshLatestSeason("");
     });
   }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(SIDEBAR_SECTIONS_STORAGE_KEY, JSON.stringify(sidebarSections));
-  }, [sidebarSections]);
 
   const handleHistoryListItemClick = async (batch_uuid) => {
     try {
