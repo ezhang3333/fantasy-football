@@ -309,22 +309,6 @@ body{
     gap: 4px;
 }
 
-.sidebar-subtitle {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.history-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 8px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-    flex: 1;
-    min-height: 0;
-}
-
 .history-list {
     display: flex;
     flex-direction: column;
@@ -398,31 +382,6 @@ body{
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
-}
-
-.train-position-picker {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-}
-
-.position-toggle {
-    flex: 1 0 60px;
-    min-width: 56px;
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--bg-2);
-    color: var(--text);
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.position-toggle.is-active {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .validation-season-section {
@@ -574,38 +533,9 @@ body{
     border: 1px solid var(--border);
 }
 
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 160px;
-}
-
 .filter-label {
     font-size: 11px;
     color: var(--text);
-}
-
-.filter-input,
-.filter-select {
-    background: var(--bg-0);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 10px;
-    color: var(--text);
-    font-size: 13px;
-    text-align: center;
-}
-
-.output-filters .filter-input[type="number"] {
-    appearance: textfield;
-    -moz-appearance: textfield;
-}
-
-.output-filters .filter-input[type="number"]::-webkit-outer-spin-button,
-.output-filters .filter-input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
 }
 
 .results-table {
@@ -716,40 +646,6 @@ body{
     background: var(--bg-0);
     border: 1px solid var(--border);
     width: 98%;
-}
-
-.header-cell.sortable {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.sort-controls {
-    display: inline-flex;
-    flex-direction: column;
-}
-
-.sort-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--text-dim);
-    cursor: pointer;
-}
-
-.sort-btn:hover {
-    color: var(--text);
-}
-
-.sort-btn:hover svg {
-    transform: translateY(-1px);
-}
-
-.sort-btn.is-active {
-    color: var(--accent);
 }
 
 .player-cell {
@@ -927,14 +823,5 @@ body{
     .output-header-actions {
         width: 100%;
         justify-content: space-between;
-    }
-
-    .train-position-picker {
-        flex-wrap: wrap;
-        overflow-x: visible;
-    }
-
-    .position-toggle {
-        flex: 1 1 calc(50% - 8px);
     }
 }
