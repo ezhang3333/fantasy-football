@@ -169,9 +169,9 @@ export default function HomePage({
                   <div>Player</div>
                   <div>Team</div>
                   <div>Pos</div>
-                  <div>pred</div>
-                  <div>delta</div>
-                  <div>prev</div>
+                  <div>Pred</div>
+                  <div>Delta</div>
+                  <div>Prev</div>
                 </div>
               ) : null}
               <div className="results-table-output-container scroll-container">
@@ -194,7 +194,7 @@ export default function HomePage({
                       <>
                         <div className="empty-title">No predictions yet</div>
                         <div className="empty-body">
-                          Select a batch from Training History or train a new model.
+                          Select a batch from training history or train a new model.
                         </div>
                         <div className="empty-actions">
                           <button
@@ -252,13 +252,13 @@ export default function HomePage({
                       </div>
                       <div className="card-stats">
                         <div>
-                          <div className="stat-label">pred</div>
+                          <div className="stat-label">Pred</div>
                           <div className="stat-value">
                             {formatOneDecimal(row.pred_next4)}
                           </div>
                         </div>
                         <div>
-                          <div className="stat-label">delta</div>
+                          <div className="stat-label">Delta</div>
                           <div
                             className={`stat-value ${
                               row.delta >= 0 ? "up" : "down"
@@ -268,7 +268,7 @@ export default function HomePage({
                           </div>
                         </div>
                         <div>
-                          <div className="stat-label">prev</div>
+                          <div className="stat-label">Prev</div>
                           <div className="stat-value">
                             {formatOneDecimal(row.fantasy_prev_5wk_avg)}
                           </div>
@@ -283,7 +283,7 @@ export default function HomePage({
                     <>
                       <div className="empty-title">No predictions yet</div>
                       <div className="empty-body">
-                        Select a Batch from Training History or train a new model.
+                        Select a Batch from training history or train a new model.
                       </div>
                       <div className="empty-actions">
                         <button

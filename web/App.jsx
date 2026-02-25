@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Funnel, History, Variable } from "lucide-react";
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { ChevronDown, ChevronUp, Funnel, History, Variable, LoaderPinwheel, User, SlidersHorizontal, CircleHelp } from "lucide-react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import "./css/App.css";
 import NumberFilter from "./NumberFilter.jsx";
 import DropdownFilter from "./DropdownFilter.jsx";
 import HistoryListItem from "./HistoryListItem.jsx";
+import SidebarRouteItem from "./SidebarRouteItem.jsx";
 import {
   getBatchPredictions,
   getRefreshOptions,
@@ -360,132 +361,28 @@ export default function App() {
     <AppShell
       sidebar={
         <>
+          <div className="sidebar-header">
+            <User size={16} />
+            Add user info
+          </div>
           <nav className="sidebar-route-nav" aria-label="Pages">
-            <NavLink to="/" end className={({ isActive }) => `sidebar-route-link${isActive ? " is-active" : ""}`}>
-              Predictor
-            </NavLink>
-            <NavLink to="/parameters" className={({ isActive }) => `sidebar-route-link${isActive ? " is-active" : ""}`}>
-              Model Parameters
-            </NavLink>
-            <NavLink to="/info" className={({ isActive }) => `sidebar-route-link${isActive ? " is-active" : ""}`}>
-              Info
-            </NavLink>
+            <SidebarRouteItem
+              to="/"
+              end
+              label="Predictor"
+              icon={<LoaderPinwheel size={14} />}
+            />
+            <SidebarRouteItem
+              to="/parameters"
+              label="Model Parameters"
+              icon={<SlidersHorizontal size={14} />}
+            />
+            <SidebarRouteItem
+              to="/info"
+              label="Info"
+              icon={<CircleHelp size={14} />}
+            />
           </nav>
-
-          <div className={`sidebar-panel${sidebarSections.model ? "" : " is-collapsed"}`}>
-            <button
-              type="button"
-              className="sidebar-panel-header"
-              aria-expanded={sidebarSections.model}
-              aria-controls="sidebar-section-model"
-              onClick={() => toggleSidebarSection("model")}
-            >
-              <span className="sidebar-panel-heading">
-                <span className="sidebar-panel-icon" aria-hidden="true">
-                  <Variable size={14} />
-                </span>
-                <span className="sidebar-panel-title">Model Parameters</span>
-              </span>
-              <span className="sidebar-panel-chevron" aria-hidden="true">
-                {getChevronForSection(sidebarSections.model)}
-              </span>
-            </button>
-            <div id="sidebar-section-model" className="sidebar-panel-body model">
-              {MODEL_FILTERS.map((f) => (
-                <NumberFilter
-                  key={f.name}
-                  name={f.name}
-                  label={f.label}
-                  value={params[f.name]}
-                  onChange={handleParamChange}
-                  min={f.min}
-                  max={f.max}
-                  step={f.step}
-                  showIcons
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className={`sidebar-panel${sidebarSections.training ? "" : " is-collapsed"}`}>
-            <button
-              type="button"
-              className="sidebar-panel-header"
-              aria-expanded={sidebarSections.training}
-              aria-controls="sidebar-section-training"
-              onClick={() => toggleSidebarSection("training")}
-            >
-              <span className="sidebar-panel-heading">
-                <span className="sidebar-panel-icon" aria-hidden="true">
-                  <Funnel size={14} />
-                </span>
-                <span className="sidebar-panel-title">Training Parameters</span>
-              </span>
-              <span className="sidebar-panel-chevron" aria-hidden="true">
-                {getChevronForSection(sidebarSections.training)}
-              </span>
-            </button>
-            <div id="sidebar-section-training" className="sidebar-panel-body training">
-              <div className="sidebar-section">
-                <div className="validation-season-title">Position</div>
-                <div className="train-position-picker">
-                  {TRAINABLE_POSITIONS.map((position) => (
-                    <button
-                      key={position}
-                      type="button"
-                      className={`position-toggle${selectedTrainPositions.includes(position) ? " is-active" : ""}`}
-                      onClick={() => toggleTrainPosition(position)}
-                    >
-                      {position}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="sidebar-section validation-season-section">
-                <div className="validation-season-title">Earliest Train Season</div>
-                <DropdownFilter
-                  id="earliest-train-season"
-                  name="earliest_train_season"
-                  label=""
-                  value={earliestTrainSeason}
-                  onChange={handleEarliestTrainSeasonChange}
-                  options={earliestTrainOptions}
-                  containerClassName="sidebar-dropdown-container"
-                  labelClassName="sidebar-dropdown-label"
-                  selectClassName="sidebar-dropdown-select"
-                />
-              </div>
-              <div className="sidebar-section validation-season-section">
-                <div className="validation-season-title">Latest Train Season</div>
-                <DropdownFilter
-                  id="latest-train-season"
-                  name="max_train_season"
-                  label=""
-                  value={maxTrainSeason}
-                  onChange={handleMaxTrainSeasonChange}
-                  options={latestTrainOptions}
-                  containerClassName="sidebar-dropdown-container"
-                  labelClassName="sidebar-dropdown-label"
-                  selectClassName="sidebar-dropdown-select"
-                />
-              </div>
-              <div className="sidebar-section validation-season-section">
-                <div className="validation-season-title">Validation Season</div>
-                <DropdownFilter
-                  id="validation-season"
-                  name="val_season"
-                  label=""
-                  value={valSeason}
-                  onChange={(_, value) => setValSeason(value)}
-                  options={valSeasonOptions}
-                  containerClassName="sidebar-dropdown-container"
-                  labelClassName="sidebar-dropdown-label"
-                  selectClassName="sidebar-dropdown-select"
-                />
-              </div>
-            </div>
-          </div>
-
           <div className={`sidebar-panel sidebar-panel-history${sidebarSections.history ? "" : " is-collapsed"}`}>
             <button
               type="button"

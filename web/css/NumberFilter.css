@@ -33,9 +33,8 @@
 
 .number-filter-container .number-filter-label {
   color: var(--text);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 500;
   font-family: inherit;
 }
 
@@ -53,7 +52,8 @@
   box-sizing: border-box;
   border-radius: 9999px;
   padding: 4px 10px;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
   font-family: inherit;
   text-align: center;
   background: var(--bg-0);

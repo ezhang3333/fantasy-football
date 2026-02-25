@@ -10,8 +10,8 @@
 
 .filter-container .filter-label {
   color: var(--text);
-  font-size: 11px;
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  font-weight: 500;
   text-align: left;
 }
 
@@ -21,6 +21,7 @@
   border-radius: 9999px;
   padding: 6px 12px 8px 12px;
   font-size: 12px;
+  font-weight: 500;
   font-family: inherit;
   text-align: left;
   background: var(--bg-0);
@@ -110,7 +111,6 @@
 }
 
 .sort-option-label {
-  text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 11px;
 }

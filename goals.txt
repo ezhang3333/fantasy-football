@@ -1,18 +1,15 @@
 Goals In Priority:
 
+1. 
 2. Handle the dataset refresh canceling with proper async version
-2. The validation, earliest train, and latest train season filters dont get udpated when we extract new Dataset
-3. Think about reworking the ui makeup of the training paramtere filters
-4. Try to abstract the react code in app.jsx the most: 1 way I can think of is creating a Dataset Modal Dialog that extracts Modal Dialog
-   and then you can put that element inside the App.jsx
-5. Cancel button should work when we are trying to extract
-6. Model paramters is default to open on startup like the initial localhost click and then also the number filters look bad
+3. The validation, earliest train, and latest train season filters dont get udpated when we extract new Dataset
+4. Cancel button should work when we are trying to extract
 5. Also getting a backend error when extracting dataset when i tried ot extract data before 2016...maybe the dataset is not clean in the datapipeline
 6. Containerize project and make sure can run on any machine
 
-4. Think about maybe also exposing how many prev weeks you want to extract and how many weeks to predict for future
-2. Expose the metadata in the model outputs page in like a side bar for users to see
-3. Reset filter button and also each page should have memory of its last used filters
+7. Think about maybe also exposing how many prev weeks you want to extract and how many weeks to predict for future
+8. Expose the metadata in the model outputs page in like a side bar for users to see
+9. Reset filter button and also each page should have memory of its last used filters
 
 Long Term Goals:
 
