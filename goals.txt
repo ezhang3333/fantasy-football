@@ -1,6 +1,7 @@
 Goals In Priority:
 
-1. 
+1. Fix output filters design as well as display
+2. Implement the model paramters and info pages
 2. Handle the dataset refresh canceling with proper async version
 3. The validation, earliest train, and latest train season filters dont get udpated when we extract new Dataset
 4. Cancel button should work when we are trying to extract
@@ -13,6 +14,7 @@ Goals In Priority:
 
 Long Term Goals:
 
+1. UI rework of the filters and add tooltips for buttons
 1. Add some sort of agent that either talks to an LLM api or uses Langchain or Hugging Face
 2. Add authorization, probably JWT which oath and openID so that users can sign in with other websites like google, etc
 3. See is it is viable to connect to sleeper leagues and espn leagues so that we can extract relevant data for a user

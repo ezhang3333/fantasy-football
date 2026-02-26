@@ -363,7 +363,7 @@ export default function App() {
         <>
           <div className="sidebar-header">
             <User size={16} />
-            Add user info
+            Sign In
           </div>
           <nav className="sidebar-route-nav" aria-label="Pages">
             <SidebarRouteItem

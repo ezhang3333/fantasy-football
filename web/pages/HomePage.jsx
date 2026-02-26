@@ -1,4 +1,10 @@
-import { ChevronDown, ChevronUp, Database, LoaderPinwheel } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Database,
+  LayoutGrid,
+  LoaderPinwheel,
+} from "lucide-react";
 import DropdownFilter from "../DropdownFilter.jsx";
 import NumberFilter from "../NumberFilter.jsx";
 import ModalDialog from "../ModalDialog.jsx";
@@ -61,18 +67,16 @@ export default function HomePage({
           </button>
           <div className="view-toggle">
             <button
-              className={`toggle-button ${viewMode === "list" ? "active" : ""}`}
+              className={`view-mode-button ${viewMode === "grid" ? "active" : ""}`}
               type="button"
-              onClick={() => setViewMode("list")}
+              onClick={() =>
+                setViewMode((currentMode) =>
+                  currentMode === "grid" ? "list" : "grid",
+                )
+              }
+              aria-pressed={viewMode === "grid"}
             >
-              List
-            </button>
-            <button
-              className={`toggle-button ${viewMode === "grid" ? "active" : ""}`}
-              type="button"
-              onClick={() => setViewMode("grid")}
-            >
-              Grid
+              <LayoutGrid size={16} />
             </button>
           </div>
         </div>

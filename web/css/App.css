@@ -492,33 +492,30 @@ body{
 
 .view-toggle {
     display: inline-flex;
-    background: var(--bg-1);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 4px;
-    gap: 4px;
+    align-items: center;
 }
 
-.toggle-button {
-    border: none;
-    background: transparent;
+.view-mode-button {
+    border: 1px solid var(--border);
+    background: var(--bg-1);
     color: var(--text-muted);
-    padding: 6px 12px;
-    border-radius: 999px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.toggle-button:hover:not(.active) {
+.view-mode-button:hover:not(.active) {
     background: rgba(246, 115, 115, 0.12);
     color: var(--text);
     box-shadow: inset 0 0 0 1px rgba(246, 115, 115, 0.35);
 }
 
-.toggle-button.active {
+.view-mode-button.active {
     background: var(--accent-soft);
     color: var(--text);
     box-shadow: inset 0 0 0 1px var(--accent);
@@ -527,10 +524,9 @@ body{
 .output-filters {
     display: flex;
     gap: 16px;
-    padding: 12px 14px;
-    border-radius: 12px;
+    padding: 12px 14px 20px 14px;
     background: var(--bg-3);
-    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .filter-label {
