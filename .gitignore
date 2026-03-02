@@ -6,3 +6,4 @@ pipeline_data/
 model/artifacts/
 model/outputs/
 node_modules/
+CLAUDE.md
