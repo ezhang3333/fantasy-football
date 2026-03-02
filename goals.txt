@@ -1,5 +1,6 @@
 Goals In Priority:
 
+1. Find good way to implement good UI/UX with Claude
 1. Fix output filters design as well as display
 2. Implement the model paramters and info pages
 2. Handle the dataset refresh canceling with proper async version
