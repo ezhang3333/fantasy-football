@@ -1,6 +1,4 @@
 from __future__ import annotations
-import asyncio
-import threading
 from dataclasses import asdict
 from enum import Enum
 from functools import lru_cache
@@ -8,11 +6,10 @@ import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from constants import ALL_POSITIONS, DB_PATH, SEASONS_TO_EXTRACT
+from constants import ALL_POSITIONS, DB_PATH
 from model.database import PredictionStore
 from model.gbt_regression import XGBHyperParams, load_final_dataset, train_xgb_regressor
 from model.predict import _default_output_columns, predict_position
-from nfl_pipeline import NFLDataPipeline
 
 
 class Position(str, Enum):
@@ -32,9 +29,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-_refresh_state_lock = threading.Lock()
-_refresh_in_progress = False
 
 @lru_cache(maxsize=1)
 def _store() -> PredictionStore:
@@ -126,21 +120,6 @@ def _compute_shared_available_seasons(data_dir: str, positions: list[Position]) 
     return result
 
 
-def _parse_extract_seasons() -> list[int]:
-    parsed: list[int] = []
-    for season in SEASONS_TO_EXTRACT:
-        try:
-            parsed.append(int(season))
-        except (TypeError, ValueError) as exc:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Invalid season in SEASONS_TO_EXTRACT: {season}",
-            ) from exc
-    if not parsed:
-        raise HTTPException(status_code=500, detail="SEASONS_TO_EXTRACT is empty.")
-    return sorted(set(parsed))
-
-
 class TrainRequest(BaseModel):
     positions: list[Position] = Field(default_factory=lambda: [Position.QB, Position.RB, Position.WR, Position.TE])
     data_dir: str = "pipeline_data/final"
@@ -155,11 +134,6 @@ class TrainRequest(BaseModel):
     colsample_bytree: float = Field(default=0.8, gt=0, le=1)
     reg_lambda: float = Field(default=1.0, ge=0)
     reg_alpha: float = Field(default=0.0, ge=0)
-
-
-class RefreshDatasetRequest(BaseModel):
-    earliest_season: int = Field(ge=1)
-    latest_season: int = Field(ge=1)
 
 
 @app.get("/train/options/range")
@@ -178,75 +152,6 @@ async def get_train_range_options(
         "max_available_season": max_available,
         "max_train_season_allowed": max_train_allowed,
         "default_max_train_season": max_train_allowed,
-    }
-
-
-@app.get("/data/refresh/options")
-async def get_data_refresh_options():
-    seasons = _parse_extract_seasons()
-    default_earliest = min(seasons)
-    default_latest = max(seasons)
-    return {
-        "allowed_earliest_season": default_earliest,
-        "allowed_latest_season": default_latest,
-        "default_earliest_season": default_earliest,
-        "default_latest_season": default_latest,
-        "configured_seasons": seasons,
-    }
-
-
-@app.post("/data/refresh")
-async def refresh_dataset(payload: RefreshDatasetRequest):
-    global _refresh_in_progress
-    seasons = _parse_extract_seasons()
-    min_allowed = min(seasons)
-    max_allowed = max(seasons)
-
-    if payload.earliest_season > payload.latest_season:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"Invalid season range: earliest_season={payload.earliest_season} "
-                f"is greater than latest_season={payload.latest_season}."
-            ),
-        )
-    if payload.earliest_season < min_allowed or payload.latest_season > max_allowed:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"Season range must be within configured extract bounds "
-                f"[{min_allowed}, {max_allowed}]. Received "
-                f"[{payload.earliest_season}, {payload.latest_season}]."
-            ),
-        )
-
-    requested_seasons = [str(season) for season in range(payload.earliest_season, payload.latest_season + 1)]
-
-    with _refresh_state_lock:
-        if _refresh_in_progress:
-            raise HTTPException(
-                status_code=409,
-                detail="A dataset refresh is already in progress.",
-            )
-        _refresh_in_progress = True
-
-    pipeline = NFLDataPipeline(requested_seasons)
-    try:
-        await asyncio.to_thread(
-            pipeline.run_pipeline,
-            save_extracted=True,
-            save_cleaned=True,
-            save_final=True,
-            out_dir="pipeline_data",
-        )
-    finally:
-        with _refresh_state_lock:
-            _refresh_in_progress = False
-
-    return {
-        "status": "ok",
-        "message": "Dataset refresh completed.",
-        "seasons_extracted": requested_seasons,
     }
 
 

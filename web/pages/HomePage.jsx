@@ -1,13 +1,11 @@
 import {
   ChevronDown,
   ChevronUp,
-  Database,
   LayoutGrid,
   LoaderPinwheel,
 } from "lucide-react";
 import DropdownFilter from "../DropdownFilter.jsx";
 import NumberFilter from "../NumberFilter.jsx";
-import ModalDialog from "../ModalDialog.jsx";
 import { formatOneDecimal, getRowKey } from "../util.js";
 
 export default function HomePage({
@@ -32,15 +30,6 @@ export default function HomePage({
   handleLoadLatestBatch,
   handleTrain,
   handleResetFilters,
-  isRefreshModalOpen,
-  setIsRefreshModalOpen,
-  isRefreshingDataset,
-  refreshEarliestSeason,
-  refreshLatestSeason,
-  refreshSeasonOptions,
-  handleRefreshEarliestChange,
-  handleRefreshLatestChange,
-  handleExtractDataset,
 }) {
   return (
     <div className="output-container">
@@ -55,16 +44,6 @@ export default function HomePage({
           <div className="output-subtitle">Gradient Boosted Tree Model</div>
         </div>
         <div className="output-header-actions">
-          <button
-            className="dataset-refresh-button"
-            type="button"
-            onClick={() => {
-              setIsRefreshModalOpen(true);
-            }}
-          >
-            <Database size={14} />
-            <span>Dataset Refresh</span>
-          </button>
           <div className="view-toggle">
             <button
               className={`view-mode-button ${viewMode === "grid" ? "active" : ""}`}
@@ -333,63 +312,6 @@ export default function HomePage({
           )}
         </>
       )}
-      <ModalDialog
-        open={isRefreshModalOpen}
-        title="Dataset Refresh"
-        onClose={() => setIsRefreshModalOpen(false)}
-      >
-        <div className="dataset-modal-copy">
-          Training outputs may change after extraction completes.
-        </div>
-        <div className="dataset-modal-body">
-          <div className="sidebar-section validation-season-section">
-            <div className="validation-season-title">Earliest Season to Extract</div>
-            <DropdownFilter
-              id="refresh-earliest-season"
-              name="refresh_earliest_season"
-              label=""
-              value={refreshEarliestSeason}
-              onChange={handleRefreshEarliestChange}
-              options={refreshSeasonOptions}
-              containerClassName="sidebar-dropdown-container"
-              labelClassName="sidebar-dropdown-label"
-              selectClassName="sidebar-dropdown-select"
-            />
-          </div>
-          <div className="sidebar-section validation-season-section">
-            <div className="validation-season-title">Latest Season to Extract</div>
-            <DropdownFilter
-              id="refresh-latest-season"
-              name="refresh_latest_season"
-              label=""
-              value={refreshLatestSeason}
-              onChange={handleRefreshLatestChange}
-              options={refreshSeasonOptions}
-              containerClassName="sidebar-dropdown-container"
-              labelClassName="sidebar-dropdown-label"
-              selectClassName="sidebar-dropdown-select"
-            />
-          </div>
-        </div>
-        <div className="dataset-modal-footer">
-          <button
-            type="button"
-            className="empty-button secondary"
-            onClick={() => setIsRefreshModalOpen(false)}
-            disabled={isRefreshingDataset}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="empty-button primary"
-            onClick={handleExtractDataset}
-            disabled={isRefreshingDataset || !refreshEarliestSeason || !refreshLatestSeason}
-          >
-            {isRefreshingDataset ? "Extracting..." : "Extract"}
-          </button>
-        </div>
-      </ModalDialog>
     </div>
   );
 }

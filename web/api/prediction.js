@@ -49,20 +49,6 @@ export const getTrainRangeOptions = (positions) => {
   return fetchApi(`${apiBase}/train/options/range${suffix}`);
 };
 
-// GET /data/refresh/options
-export const getRefreshOptions = () => {
-  return fetchApi(`${apiBase}/data/refresh/options`);
-};
-
-// POST /data/refresh
-export const refreshDataset = (payload) => {
-  return fetchApi(`${apiBase}/data/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-};
-
 // POST /train
 export const trainModel = (payload) => {
   return fetchApi(`${apiBase}/train`, {

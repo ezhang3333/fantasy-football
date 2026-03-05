@@ -8,10 +8,8 @@ import HistoryListItem from "./HistoryListItem.jsx";
 import SidebarRouteItem from "./SidebarRouteItem.jsx";
 import {
   getBatchPredictions,
-  getRefreshOptions,
   getTrainRangeOptions,
   listBatches,
-  refreshDataset,
   trainModel,
 } from "./api/prediction.js";
 import { MODEL_FILTERS, TRAINABLE_POSITIONS } from "./constants.js";
@@ -51,11 +49,6 @@ export default function App() {
   const [earliestTrainSeason, setEarliestTrainSeason] = useState("");
   const [maxTrainSeason, setMaxTrainSeason] = useState("");
   const [valSeason, setValSeason] = useState("");
-  const [isRefreshModalOpen, setIsRefreshModalOpen] = useState(false);
-  const [isRefreshingDataset, setIsRefreshingDataset] = useState(false);
-  const [refreshAvailableSeasons, setRefreshAvailableSeasons] = useState([]);
-  const [refreshEarliestSeason, setRefreshEarliestSeason] = useState("");
-  const [refreshLatestSeason, setRefreshLatestSeason] = useState("");
   const [sidebarSections, setSidebarSections] = useState(DEFAULT_SIDEBAR_SECTIONS);
 
   useEffect(() => {
@@ -96,11 +89,6 @@ export default function App() {
       ? seasonOptionsForDropdown.filter((option) => Number(option.value) > Number(maxTrainSeason))
       : [{ value: "", label: "No seasons available" }];
 
-  const refreshSeasonOptions = refreshAvailableSeasons.map((season) => ({
-    value: season,
-    label: season,
-  }));
-
   const loadTrainOptions = async () => {
     const selectedPositions = selectedTrainPositions.length > 0 ? selectedTrainPositions : undefined;
     const response = await getTrainRangeOptions(selectedPositions);
@@ -125,16 +113,6 @@ export default function App() {
     setValSeason(defaultVal);
   };
 
-  const loadRefreshOptions = async () => {
-    const response = await getRefreshOptions();
-    const seasons = Array.isArray(response?.configured_seasons)
-      ? response.configured_seasons.map((season) => String(season)).sort((a, b) => Number(a) - Number(b))
-      : [];
-    setRefreshAvailableSeasons(seasons);
-    setRefreshEarliestSeason(String(response?.default_earliest_season ?? seasons[0] ?? ""));
-    setRefreshLatestSeason(String(response?.default_latest_season ?? seasons[seasons.length - 1] ?? ""));
-  };
-
   useEffect(() => {
     loadTrainOptions().catch(() => {
       setAvailableSeasons([]);
@@ -143,14 +121,6 @@ export default function App() {
       setValSeason("");
     });
   }, [selectedTrainPositions]);
-
-  useEffect(() => {
-    loadRefreshOptions().catch(() => {
-      setRefreshAvailableSeasons([]);
-      setRefreshEarliestSeason("");
-      setRefreshLatestSeason("");
-    });
-  }, []);
 
   const handleHistoryListItemClick = async (batch_uuid) => {
     try {
@@ -244,41 +214,6 @@ export default function App() {
       setTrainError(e.message);
     } finally {
       setIsTraining(false);
-    }
-  };
-
-  const handleRefreshEarliestChange = (_, value) => {
-    setRefreshEarliestSeason(value);
-    if (refreshLatestSeason && Number(value) > Number(refreshLatestSeason)) {
-      setRefreshLatestSeason(value);
-    }
-  };
-
-  const handleRefreshLatestChange = (_, value) => {
-    setRefreshLatestSeason(value);
-    if (refreshEarliestSeason && Number(value) < Number(refreshEarliestSeason)) {
-      setRefreshEarliestSeason(value);
-    }
-  };
-
-  const handleExtractDataset = async () => {
-    if (!refreshEarliestSeason || !refreshLatestSeason) {
-      return;
-    }
-    setIsRefreshingDataset(true);
-    try {
-      const response = await refreshDataset({
-        earliest_season: Number(refreshEarliestSeason),
-        latest_season: Number(refreshLatestSeason),
-      });
-      if (response?.status === "ok") {
-        await loadTrainOptions();
-      }
-      setIsRefreshModalOpen(false);
-    } catch (e) {
-      setTrainError(e.message);
-    } finally {
-      setIsRefreshingDataset(false);
     }
   };
 
@@ -454,15 +389,6 @@ export default function App() {
               handleLoadLatestBatch={handleLoadLatestBatch}
               handleTrain={handleTrain}
               handleResetFilters={handleResetFilters}
-              isRefreshModalOpen={isRefreshModalOpen}
-              setIsRefreshModalOpen={setIsRefreshModalOpen}
-              isRefreshingDataset={isRefreshingDataset}
-              refreshEarliestSeason={refreshEarliestSeason}
-              refreshLatestSeason={refreshLatestSeason}
-              refreshSeasonOptions={refreshSeasonOptions}
-              handleRefreshEarliestChange={handleRefreshEarliestChange}
-              handleRefreshLatestChange={handleRefreshLatestChange}
-              handleExtractDataset={handleExtractDataset}
             />
           }
         />
