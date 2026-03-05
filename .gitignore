@@ -7,3 +7,4 @@ model/artifacts/
 model/outputs/
 node_modules/
 CLAUDE.md
+.claude/

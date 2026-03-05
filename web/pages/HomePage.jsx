@@ -103,11 +103,13 @@ export default function HomePage({
               value={positionFilter}
               onChange={(_, value) => setPositionFilter(value)}
               options={["All", "QB", "RB", "WR", "TE"]}
+              containerClassName="filter-container position-filter-container"
             />
             <DropdownFilter
               id="sort-filter"
               name="sort"
               label="Sort by"
+              containerClassName="filter-container sort-filter-container"
               value={sortConfig.key ?? "none"}
               onChange={handleSortSelection}
               options={[

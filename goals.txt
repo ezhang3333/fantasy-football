@@ -1,11 +1,6 @@
 Goals In Priority:
 
-1. Find good way to implement good UI/UX with Claude
-1. Fix output filters design as well as display
 2. Implement the model paramters and info pages
-2. Handle the dataset refresh canceling with proper async version
-3. The validation, earliest train, and latest train season filters dont get udpated when we extract new Dataset
-4. Cancel button should work when we are trying to extract
 5. Also getting a backend error when extracting dataset when i tried ot extract data before 2016...maybe the dataset is not clean in the datapipeline
 6. Containerize project and make sure can run on any machine
 

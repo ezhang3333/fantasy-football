@@ -529,6 +529,11 @@ body{
     border-bottom: 1px solid var(--border);
 }
 
+.output-filters .filter-select,
+.output-filters .number-filter-input {
+    border-color: transparent;
+}
+
 .filter-label {
     font-size: 11px;
     color: var(--text);
