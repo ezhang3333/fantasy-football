@@ -1,5 +1,6 @@
 Goals In Priority:
 
+1. Have the train model button display the cool spin waiting in all 3 pages
 2. Implement the model paramters and info pages
 5. Also getting a backend error when extracting dataset when i tried ot extract data before 2016...maybe the dataset is not clean in the datapipeline
 6. Containerize project and make sure can run on any machine

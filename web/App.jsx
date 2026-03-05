@@ -397,7 +397,9 @@ export default function App() {
           element={
             <ParametersPage
               params={params}
+              handleParamChange={handleParamChange}
               selectedTrainPositions={selectedTrainPositions}
+              toggleTrainPosition={toggleTrainPosition}
               earliestTrainSeason={earliestTrainSeason}
               maxTrainSeason={maxTrainSeason}
               valSeason={valSeason}
