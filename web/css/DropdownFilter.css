@@ -147,7 +147,7 @@
 }
 
 .position-filter-container {
-  max-width: 70px;
+  max-width: 75px;
 }
 
 .position-filter-container .filter-select-menu {
@@ -160,4 +160,21 @@
 
 .sort-filter-container .filter-select-menu {
   width: 140px;
+}
+
+.season-dropdowns-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.season-filter-container {
+  max-width: 160px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.season-filter-container .filter-select-menu {
+  width: 160px;
 }

@@ -1,13 +1,10 @@
 Goals In Priority:
 
-1. Have the train model button display the cool spin waiting in all 3 pages
-2. Implement the model paramters and info pages
-5. Also getting a backend error when extracting dataset when i tried ot extract data before 2016...maybe the dataset is not clean in the datapipeline
-6. Containerize project and make sure can run on any machine
-
-7. Think about maybe also exposing how many prev weeks you want to extract and how many weeks to predict for future
-8. Expose the metadata in the model outputs page in like a side bar for users to see
-9. Reset filter button and also each page should have memory of its last used filters
+1. Implement info pages
+2. Containerize project and make sure can run on any machine
+3. Think about maybe also exposing how many prev weeks you want to extract and how many weeks to predict for future
+4. Expose the metadata in the model outputs page in like a side bar for users to see
+5. Reset filter button and also each page should have memory of its last used filters
 
 Long Term Goals:
 

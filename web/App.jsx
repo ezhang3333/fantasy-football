@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Funnel, History, Variable, LoaderPinwheel, User, SlidersHorizontal, CircleHelp } from "lucide-react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./css/App.css";
 import NumberFilter from "./NumberFilter.jsx";
 import DropdownFilter from "./DropdownFilter.jsx";
@@ -25,6 +25,7 @@ const DEFAULT_SIDEBAR_SECTIONS = {
 };
 
 export default function App() {
+  const navigate = useNavigate();
   const [params, setParams] = useState({
     n_estimators: "300",
     learning_rate: "0.1",
@@ -77,16 +78,20 @@ export default function App() {
 
   const latestTrainOptions =
     availableSeasons.length > 1 && earliestTrainSeason
-      ? seasonOptionsForDropdown.filter(
-          (option) =>
-            Number(option.value) >= Number(earliestTrainSeason) &&
-            Number(option.value) <= Number(maxTrainAllowedSeason)
-        )
+      ? seasonOptionsForDropdown
+          .filter(
+            (option) =>
+              Number(option.value) >= Number(earliestTrainSeason) &&
+              Number(option.value) <= Number(maxTrainAllowedSeason)
+          )
+          .reverse()
       : [{ value: "", label: "No seasons available" }];
 
   const valSeasonOptions =
     availableSeasons.length > 1 && maxTrainSeason
-      ? seasonOptionsForDropdown.filter((option) => Number(option.value) > Number(maxTrainSeason))
+      ? seasonOptionsForDropdown
+          .filter((option) => Number(option.value) > Number(maxTrainSeason))
+          .reverse()
       : [{ value: "", label: "No seasons available" }];
 
   const loadTrainOptions = async () => {
@@ -124,6 +129,7 @@ export default function App() {
 
   const handleHistoryListItemClick = async (batch_uuid) => {
     try {
+      navigate("/");
       setSelectedBatchId(batch_uuid);
       const playerData = await getBatchPredictions(batch_uuid);
       setModelOutputs(playerData);
@@ -183,6 +189,10 @@ export default function App() {
       const highestVal = availableSeasons[availableSeasons.length - 1] ?? "";
       setValSeason(Number(highestVal) > Number(value) ? highestVal : "");
     }
+  };
+
+  const handleValSeasonChange = (_, value) => {
+    setValSeason(value);
   };
 
   const handleTrain = async () => {
@@ -403,12 +413,30 @@ export default function App() {
               earliestTrainSeason={earliestTrainSeason}
               maxTrainSeason={maxTrainSeason}
               valSeason={valSeason}
+              earliestTrainOptions={earliestTrainOptions}
+              latestTrainOptions={latestTrainOptions}
+              valSeasonOptions={valSeasonOptions}
+              handleEarliestTrainSeasonChange={handleEarliestTrainSeasonChange}
+              handleMaxTrainSeasonChange={handleMaxTrainSeasonChange}
+              handleValSeasonChange={handleValSeasonChange}
             />
           }
         />
         <Route path="/info" element={<InfoPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      {isTraining && (
+        <div className="training-overlay">
+          <div className="loading-state">
+            <div className="loading-orbit" aria-hidden="true">
+              <span className="orbit-ring" />
+              <span className="orbit-dot" />
+            </div>
+            <div className="loading-title">Training your model</div>
+            <div className="loading-subtitle">Optimizing features and scoring outputs.</div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

@@ -61,19 +61,7 @@ export default function HomePage({
         </div>
       </div>
 
-      {isTraining ? (
-        <div className="loading-state">
-          <div className="loading-orbit" aria-hidden="true">
-            <span className="orbit-ring" />
-            <span className="orbit-dot" />
-          </div>
-          <div className="loading-title">Training your model</div>
-          <div className="loading-subtitle">
-            Optimizing features and scoring outputs.
-          </div>
-        </div>
-      ) : (
-        <>
+      <>
           <div className="output-filters">
             <DropdownFilter
               id="position-filter"
@@ -313,7 +301,6 @@ export default function HomePage({
             </div>
           )}
         </>
-      )}
     </div>
   );
 }

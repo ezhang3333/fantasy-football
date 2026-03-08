@@ -1,6 +1,7 @@
 import { useState } from "react";
 import * as Slider from "@radix-ui/react-slider";
 import SelectButton from "../SelectButton.jsx";
+import DropdownFilter from "../DropdownFilter.jsx";
 import { TRAINABLE_POSITIONS } from "../constants.js";
 import "../css/HyperParamDetail.css";
 
@@ -32,6 +33,12 @@ export default function ParametersPage({
   earliestTrainSeason,
   maxTrainSeason,
   valSeason,
+  earliestTrainOptions,
+  latestTrainOptions,
+  valSeasonOptions,
+  handleEarliestTrainSeasonChange,
+  handleMaxTrainSeasonChange,
+  handleValSeasonChange,
 }) {
   const paramEntries = Object.entries(params ?? {});
   const [activeParam, setActiveParam] = useState(null);
@@ -62,8 +69,31 @@ export default function ParametersPage({
       </div>
       <div className="page-panel">
         <div className="page-panel-title">Season Window</div>
-        <div className="page-panel-copy">
-          Earliest train: {earliestTrainSeason || "-"} | Latest train: {maxTrainSeason || "-"} | Validation: {valSeason || "-"}
+        <div className="season-dropdowns-row">
+          <DropdownFilter
+            name="earliestTrainSeason"
+            label="Earliest Train"
+            value={earliestTrainSeason}
+            onChange={handleEarliestTrainSeasonChange}
+            options={earliestTrainOptions ?? []}
+            containerClassName="filter-container season-filter-container"
+          />
+          <DropdownFilter
+            name="maxTrainSeason"
+            label="Latest Train"
+            value={maxTrainSeason}
+            onChange={handleMaxTrainSeasonChange}
+            options={latestTrainOptions ?? []}
+            containerClassName="filter-container season-filter-container"
+          />
+          <DropdownFilter
+            name="valSeason"
+            label="Validation"
+            value={valSeason}
+            onChange={handleValSeasonChange}
+            options={valSeasonOptions ?? []}
+            containerClassName="filter-container season-filter-container"
+          />
         </div>
       </div>
       <div className="page-panel">
