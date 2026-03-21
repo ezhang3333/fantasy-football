@@ -8,3 +8,4 @@ model/outputs/
 node_modules/
 CLAUDE.md
 .claude/
+goals.txt
