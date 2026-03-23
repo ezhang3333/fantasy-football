@@ -325,8 +325,8 @@ body{
 .history-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
     overflow: auto;
+    gap: 3px;
     flex: 1;
     min-height: 0;
     padding-right: 4px;
@@ -339,6 +339,7 @@ body{
     padding: 10px 12px;
     border-radius: 10px;
     cursor: pointer;
+    justify-content: center;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     color: var(--text-muted);
     text-overflow: ellipsis;
