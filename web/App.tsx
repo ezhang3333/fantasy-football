@@ -242,6 +242,13 @@ export default function App() {
       await trainModel(payload);
       const batches = await listBatches(15);
       setListBatchPredictions(batches);
+      if (batches.length > 0) {
+        const newest = batches[0];
+        setSelectedBatchId(newest.batch_uuid);
+        const playerData = await getBatchPredictions(newest.batch_uuid);
+        setModelOutputs(playerData);
+        navigate("/");
+      }
     } catch (e) {
       setTrainError((e as Error).message);
     } finally {
