@@ -1,6 +1,22 @@
+import type { ReactNode, CSSProperties } from "react";
 import { NavLink } from "react-router-dom";
 
-function toCssSize(value) {
+interface CSSCustomProperties extends CSSProperties {
+  "--sidebar-route-icon-gap"?: string;
+  "--sidebar-route-left-padding"?: string;
+}
+
+interface SidebarRouteItemProps {
+  to: string;
+  label: string;
+  icon?: ReactNode;
+  end?: boolean;
+  iconGap?: number | string;
+  leftPadding?: number | string;
+  className?: string;
+}
+
+function toCssSize(value: number | string): string {
   return typeof value === "number" ? `${value}px` : value;
 }
 
@@ -12,8 +28,8 @@ export default function SidebarRouteItem({
   iconGap = 8,
   leftPadding = 5,
   className = "",
-}) {
-  const style = {
+}: SidebarRouteItemProps) {
+  const style: CSSCustomProperties = {
     "--sidebar-route-icon-gap": toCssSize(iconGap),
     "--sidebar-route-left-padding": toCssSize(leftPadding),
   };

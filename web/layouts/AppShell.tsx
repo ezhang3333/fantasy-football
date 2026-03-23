@@ -1,6 +1,12 @@
+import type { ReactNode } from "react";
 import "../css/App.css";
 
-export default function AppShell({ sidebar, children }) {
+interface AppShellProps {
+  sidebar?: ReactNode;
+  children?: ReactNode;
+}
+
+export default function AppShell({ sidebar, children }: AppShellProps) {
   return (
     <div className="base-container">
       <div className="filter-and-history-sidebar">{sidebar}</div>

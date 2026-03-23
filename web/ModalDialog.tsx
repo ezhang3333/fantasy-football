@@ -1,13 +1,21 @@
 import { useId } from "react";
+import type { ReactNode } from "react";
 import "./css/ModalDialog.css";
+
+interface ModalDialogProps {
+  open: boolean;
+  title?: ReactNode;
+  onClose?: () => void;
+  children?: ReactNode;
+  className?: string;
+}
 
 export default function ModalDialog({
   open,
   title,
-  onClose,
   children,
   className = "",
-}) {
+}: ModalDialogProps) {
   const titleId = useId();
 
   if (!open) {

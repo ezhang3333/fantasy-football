@@ -1,22 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Funnel, History, Variable, LoaderPinwheel, User, SlidersHorizontal, CircleHelp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  History,
+  LoaderPinwheel,
+  User,
+  SlidersHorizontal,
+  CircleHelp,
+} from "lucide-react";
+import type { ReactNode } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./css/App.css";
-import NumberFilter from "./NumberFilter.jsx";
-import DropdownFilter from "./DropdownFilter.jsx";
-import HistoryListItem from "./HistoryListItem.jsx";
-import SidebarRouteItem from "./SidebarRouteItem.jsx";
+import NumberFilter from "./NumberFilter.tsx";
+import DropdownFilter from "./DropdownFilter.tsx";
+import HistoryListItem from "./HistoryListItem.tsx";
+import SidebarRouteItem from "./SidebarRouteItem.tsx";
 import {
   getBatchPredictions,
   getTrainRangeOptions,
   listBatches,
   trainModel,
-} from "./api/prediction.js";
-import { MODEL_FILTERS, TRAINABLE_POSITIONS } from "./constants.js";
-import AppShell from "./layouts/AppShell.jsx";
-import HomePage from "./pages/HomePage.jsx";
-import ParametersPage from "./pages/ParametersPage.jsx";
-import InfoPage from "./pages/InfoPage.jsx";
+} from "./api/prediction.ts";
+import { TRAINABLE_POSITIONS } from "./constants.ts";
+import AppShell from "./layouts/AppShell.tsx";
+import HomePage from "./pages/HomePage.tsx";
+import ParametersPage from "./pages/ParametersPage.tsx";
+import InfoPage from "./pages/InfoPage.tsx";
+import type {
+  BatchInfo,
+  ModelParamKey,
+  ModelParams,
+  PlayerPrediction,
+  SeasonOption,
+  SortConfig,
+  TrainPayload,
+} from "./types.ts";
 
 const DEFAULT_SIDEBAR_SECTIONS = {
   model: false,
@@ -24,33 +42,37 @@ const DEFAULT_SIDEBAR_SECTIONS = {
   history: true,
 };
 
+type SidebarSections = typeof DEFAULT_SIDEBAR_SECTIONS;
+
+const DEFAULT_PARAMS: ModelParams = {
+  n_estimators: "300",
+  learning_rate: "0.1",
+  max_depth: "6",
+  subsample: "0.8",
+  colsample_bytree: "0.8",
+  reg_lambda: "1",
+  reg_alpha: "0",
+};
+
 export default function App() {
   const navigate = useNavigate();
-  const [params, setParams] = useState({
-    n_estimators: "300",
-    learning_rate: "0.1",
-    max_depth: "6",
-    subsample: "0.8",
-    colsample_bytree: "0.8",
-    reg_lambda: "1",
-    reg_alpha: "0",
-  });
-  const [isTraining, setIsTraining] = useState(false);
-  const [trainError, setTrainError] = useState("");
-  const [listBatchPredictions, setListBatchPredictions] = useState([]);
-  const [viewMode, setViewMode] = useState("list");
-  const [positionFilter, setPositionFilter] = useState("All");
-  const [minPred, setMinPred] = useState("0");
-  const [minDelta, setMinDelta] = useState("-30");
-  const [modelOutputs, setModelOutputs] = useState([]);
-  const [selectedBatchId, setSelectedBatchId] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
-  const [selectedTrainPositions, setSelectedTrainPositions] = useState(TRAINABLE_POSITIONS);
-  const [availableSeasons, setAvailableSeasons] = useState([]);
-  const [earliestTrainSeason, setEarliestTrainSeason] = useState("");
-  const [maxTrainSeason, setMaxTrainSeason] = useState("");
-  const [valSeason, setValSeason] = useState("");
-  const [sidebarSections, setSidebarSections] = useState(DEFAULT_SIDEBAR_SECTIONS);
+  const [params, setParams] = useState<ModelParams>(DEFAULT_PARAMS);
+  const [isTraining, setIsTraining] = useState<boolean>(false);
+  const [trainError, setTrainError] = useState<string>("");
+  const [listBatchPredictions, setListBatchPredictions] = useState<BatchInfo[]>([]);
+  const [viewMode, setViewMode] = useState<string>("list");
+  const [positionFilter, setPositionFilter] = useState<string>("All");
+  const [minPred, setMinPred] = useState<string>("0");
+  const [minDelta, setMinDelta] = useState<string>("-30");
+  const [modelOutputs, setModelOutputs] = useState<PlayerPrediction[]>([]);
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
+  const [selectedTrainPositions, setSelectedTrainPositions] = useState<string[]>(TRAINABLE_POSITIONS);
+  const [availableSeasons, setAvailableSeasons] = useState<string[]>([]);
+  const [earliestTrainSeason, setEarliestTrainSeason] = useState<string>("");
+  const [maxTrainSeason, setMaxTrainSeason] = useState<string>("");
+  const [valSeason, setValSeason] = useState<string>("");
+  const [sidebarSections, setSidebarSections] = useState<SidebarSections>(DEFAULT_SIDEBAR_SECTIONS);
 
   useEffect(() => {
     const loadHistoryListOnStart = async () => {
@@ -58,25 +80,25 @@ export default function App() {
         const batches = await listBatches(15);
         setListBatchPredictions(batches);
       } catch (e) {
-        throw new Error(`Error on startup: ${e.message}`);
+        throw new Error(`Error on startup: ${(e as Error).message}`);
       }
     };
     loadHistoryListOnStart();
   }, []);
 
-  const seasonOptionsForDropdown = useMemo(
+  const seasonOptionsForDropdown = useMemo<SeasonOption[]>(
     () => availableSeasons.map((season) => ({ value: season, label: season })),
     [availableSeasons]
   );
   const maxTrainAllowedSeason =
     availableSeasons.length > 1 ? availableSeasons[availableSeasons.length - 2] : "";
 
-  const earliestTrainOptions =
+  const earliestTrainOptions: SeasonOption[] =
     availableSeasons.length > 1
       ? seasonOptionsForDropdown.filter((option) => Number(option.value) <= Number(maxTrainAllowedSeason))
       : [{ value: "", label: "No seasons available" }];
 
-  const latestTrainOptions =
+  const latestTrainOptions: SeasonOption[] =
     availableSeasons.length > 1 && earliestTrainSeason
       ? seasonOptionsForDropdown
           .filter(
@@ -87,7 +109,7 @@ export default function App() {
           .reverse()
       : [{ value: "", label: "No seasons available" }];
 
-  const valSeasonOptions =
+  const valSeasonOptions: SeasonOption[] =
     availableSeasons.length > 1 && maxTrainSeason
       ? seasonOptionsForDropdown
           .filter((option) => Number(option.value) > Number(maxTrainSeason))
@@ -97,7 +119,7 @@ export default function App() {
   const loadTrainOptions = async () => {
     const selectedPositions = selectedTrainPositions.length > 0 ? selectedTrainPositions : undefined;
     const response = await getTrainRangeOptions(selectedPositions);
-    const seasons = Array.isArray(response?.available_seasons)
+    const seasons: string[] = Array.isArray(response?.available_seasons)
       ? response.available_seasons.map((season) => String(season)).sort((a, b) => Number(a) - Number(b))
       : [];
     setAvailableSeasons(seasons);
@@ -127,22 +149,22 @@ export default function App() {
     });
   }, [selectedTrainPositions]);
 
-  const handleHistoryListItemClick = async (batch_uuid) => {
+  const handleHistoryListItemClick = async (batch_uuid: string) => {
     try {
       navigate("/");
       setSelectedBatchId(batch_uuid);
       const playerData = await getBatchPredictions(batch_uuid);
       setModelOutputs(playerData);
     } catch (e) {
-      throw new Error(`Error when clicking history list item: ${e.message}`);
+      throw new Error(`Error when clicking history list item: ${(e as Error).message}`);
     }
   };
 
-  const handleParamChange = (name, rawValue) => {
+  const handleParamChange = (name: ModelParamKey, rawValue: string) => {
     setParams((prev) => ({ ...prev, [name]: rawValue }));
   };
 
-  const toggleTrainPosition = (position) => {
+  const toggleTrainPosition = (position: string) => {
     setSelectedTrainPositions((prev) =>
       prev.includes(position)
         ? prev.filter((p) => p !== position)
@@ -160,7 +182,7 @@ export default function App() {
     Number(earliestTrainSeason) <= Number(maxTrainSeason) &&
     Number(valSeason) > Number(maxTrainSeason);
 
-  const handleEarliestTrainSeasonChange = (_, value) => {
+  const handleEarliestTrainSeasonChange = (_name: string, value: string) => {
     setEarliestTrainSeason(value);
     if (!maxTrainAllowedSeason) {
       setMaxTrainSeason("");
@@ -183,7 +205,7 @@ export default function App() {
     }
   };
 
-  const handleMaxTrainSeasonChange = (_, value) => {
+  const handleMaxTrainSeasonChange = (_name: string, value: string) => {
     setMaxTrainSeason(value);
     if (!valSeason || Number(valSeason) <= Number(value)) {
       const highestVal = availableSeasons[availableSeasons.length - 1] ?? "";
@@ -191,7 +213,7 @@ export default function App() {
     }
   };
 
-  const handleValSeasonChange = (_, value) => {
+  const handleValSeasonChange = (_name: string, value: string) => {
     setValSeason(value);
   };
 
@@ -203,7 +225,7 @@ export default function App() {
     setIsTraining(true);
     setTrainError("");
 
-    const payload = {
+    const payload: TrainPayload = {
       positions: selectedTrainPositions,
       earliest_train_season: Number(earliestTrainSeason),
       max_train_season: Number(maxTrainSeason),
@@ -221,7 +243,7 @@ export default function App() {
       const batches = await listBatches(15);
       setListBatchPredictions(batches);
     } catch (e) {
-      setTrainError(e.message);
+      setTrainError((e as Error).message);
     } finally {
       setIsTraining(false);
     }
@@ -245,8 +267,9 @@ export default function App() {
   });
   const sortedResults = sortConfig.key
     ? [...filteredResults].sort((a, b) => {
-        const aValue = Number(a[sortConfig.key] ?? 0);
-        const bValue = Number(b[sortConfig.key] ?? 0);
+        const key = sortConfig.key as keyof PlayerPrediction;
+        const aValue = Number(a[key] ?? 0);
+        const bValue = Number(b[key] ?? 0);
         if (aValue === bValue) return 0;
         const dir = sortConfig.direction === "asc" ? 1 : -1;
         return aValue > bValue ? dir : -dir;
@@ -270,7 +293,8 @@ export default function App() {
     setMinPred("0");
     setMinDelta("0");
   };
-  const handleSortSelection = (_, value) => {
+
+  const handleSortSelection = (_name: string, value: string) => {
     if (value === "none") {
       setSortConfig({ key: null, direction: null });
       return;
@@ -281,7 +305,7 @@ export default function App() {
     }));
   };
 
-  const handleSortToggle = (key) => {
+  const handleSortToggle = (key: string) => {
     setSortConfig((prev) => {
       if (prev.key !== key) {
         return { key, direction: "asc" };
@@ -293,14 +317,15 @@ export default function App() {
     });
   };
 
-  const toggleSidebarSection = (sectionKey) => {
+  const toggleSidebarSection = (sectionKey: keyof SidebarSections) => {
     setSidebarSections((prev) => ({
       ...prev,
       [sectionKey]: !prev[sectionKey],
     }));
   };
 
-  const getChevronForSection = (isOpen) => (isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />);
+  const getChevronForSection = (isOpen: boolean): ReactNode =>
+    isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
 
   return (
     <AppShell

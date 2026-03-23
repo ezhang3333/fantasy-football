@@ -1,5 +1,35 @@
-import "./css/NumberFilter.css";
 import { ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
+import "./css/NumberFilter.css";
+
+interface NumberFilterProps {
+  name: string;
+  label: string;
+  value: string | number;
+  onChange: (name: string, value: string) => void;
+  min?: number;
+  max?: number;
+  step?: number | string;
+  id?: string;
+  stacked?: boolean;
+}
+
+function decimalsFromStep(step: number | string | undefined): number {
+  const s = String(step ?? 1);
+  const dot = s.indexOf(".");
+  return dot === -1 ? 0 : Math.min(6, s.length - dot - 1);
+}
+
+function clamp(n: number, min: number | undefined, max: number | undefined): number {
+  let x = n;
+  if (min !== undefined) x = Math.max(Number(min), x);
+  if (max !== undefined) x = Math.min(Number(max), x);
+  return x;
+}
+
+function formatByStep(n: number, step: number | string | undefined): string {
+  const d = decimalsFromStep(step);
+  return Number(n).toFixed(d);
+}
 
 export default function NumberFilter({
   name,
@@ -10,30 +40,12 @@ export default function NumberFilter({
   max,
   step,
   id,
-  stacked = false
-}) {
+  stacked = false,
+}: NumberFilterProps) {
   const inputId = id ?? `param-${name}`;
   const containerClassName = stacked ? "number-filter-container stacked" : "number-filter-container";
 
-  const decimalsFromStep = (step) => {
-    const s = String(step ?? 1);
-    const dot = s.indexOf(".");
-    return dot === -1 ? 0 : Math.min(6, s.length - dot - 1);
-  };
-
-  const clamp = (n, min, max) => {
-    let x = n;
-    if (min !== undefined) x = Math.max(Number(min), x);
-    if (max !== undefined) x = Math.min(Number(max), x);
-    return x;
-  };
-
-  const formatByStep = (n, step) => {
-    const d = decimalsFromStep(step);
-    return Number(n).toFixed(d);
-  };
-
-  const bump = (delta) => {
+  const bump = (delta: number) => {
     const curr = Number(value ?? 0);
     let next = curr + Number(delta);
     next = clamp(next, min, max);
@@ -63,7 +75,7 @@ export default function NumberFilter({
               <button
                 type="button"
                 className="icon-btn chevron-btn"
-                onClick={() => bump(+step)}
+                onClick={() => bump(Number(step ?? 1))}
                 aria-label={`Increase ${label}`}
               >
                 <ChevronUp size={16} />
@@ -71,7 +83,7 @@ export default function NumberFilter({
               <button
                 type="button"
                 className="icon-btn chevron-btn"
-                onClick={() => bump(-step)}
+                onClick={() => bump(-Number(step ?? 1))}
                 aria-label={`Decrease ${label}`}
               >
                 <ChevronDown size={16} />
@@ -83,7 +95,7 @@ export default function NumberFilter({
             <button
               type="button"
               className="icon-btn"
-              onClick={() => bump(+step)}
+              onClick={() => bump(Number(step ?? 1))}
               aria-label={`Increase ${label}`}
             >
               <Plus className="plus-sign" size={20} />
@@ -102,7 +114,7 @@ export default function NumberFilter({
             <button
               type="button"
               className="icon-btn"
-              onClick={() => bump(-step)}
+              onClick={() => bump(-Number(step ?? 1))}
               aria-label={`Decrease ${label}`}
             >
               <Minus className="minus-sign" size={20} />

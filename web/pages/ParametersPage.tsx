@@ -1,11 +1,19 @@
 import { useState } from "react";
 import * as Slider from "@radix-ui/react-slider";
-import SelectButton from "../SelectButton.jsx";
-import DropdownFilter from "../DropdownFilter.jsx";
-import { TRAINABLE_POSITIONS } from "../constants.js";
+import SelectButton from "../SelectButton.tsx";
+import DropdownFilter from "../DropdownFilter.tsx";
+import type { DropdownOption } from "../DropdownFilter.tsx";
+import { TRAINABLE_POSITIONS } from "../constants.ts";
+import type { ModelParams, ModelParamKey } from "../types.ts";
 import "../css/HyperParamDetail.css";
 
-const PARAM_RANGES = {
+interface ParamRange {
+  min: number;
+  max: number;
+  step: number;
+}
+
+const PARAM_RANGES: Record<ModelParamKey, ParamRange> = {
   n_estimators:     { min: 10,    max: 2000, step: 10    },
   learning_rate:    { min: 0.001, max: 0.5,  step: 0.001 },
   max_depth:        { min: 1,     max: 20,   step: 1     },
@@ -15,7 +23,7 @@ const PARAM_RANGES = {
   reg_alpha:        { min: 0,     max: 10,   step: 0.1   },
 };
 
-const PARAM_DESCRIPTIONS = {
+const PARAM_DESCRIPTIONS: Record<ModelParamKey, string> = {
   n_estimators:     "Number of boosting rounds (trees). More trees = stronger model but slower training. Too many risks overfitting — balance with learning_rate.",
   learning_rate:    "Shrinks the contribution of each tree. Lower = more conservative, requires more trees. Pair with higher n_estimators for best results.",
   max_depth:        "Maximum depth per tree. Deeper trees capture more complex patterns but overfit more easily. Values of 3–8 are typical.",
@@ -24,6 +32,22 @@ const PARAM_DESCRIPTIONS = {
   reg_lambda:       "L2 (ridge) regularization. Higher values shrink weights toward zero, reducing model complexity and variance.",
   reg_alpha:        "L1 (lasso) regularization. Higher values push weights to exactly zero, useful for sparse feature selection.",
 };
+
+interface ParametersPageProps {
+  params: ModelParams;
+  handleParamChange: (name: ModelParamKey, value: string) => void;
+  selectedTrainPositions: string[];
+  toggleTrainPosition: (position: string) => void;
+  earliestTrainSeason: string;
+  maxTrainSeason: string;
+  valSeason: string;
+  earliestTrainOptions: DropdownOption[];
+  latestTrainOptions: DropdownOption[];
+  valSeasonOptions: DropdownOption[];
+  handleEarliestTrainSeasonChange: (name: string, value: string) => void;
+  handleMaxTrainSeasonChange: (name: string, value: string) => void;
+  handleValSeasonChange: (name: string, value: string) => void;
+}
 
 export default function ParametersPage({
   params,
@@ -39,12 +63,14 @@ export default function ParametersPage({
   handleEarliestTrainSeasonChange,
   handleMaxTrainSeasonChange,
   handleValSeasonChange,
-}) {
-  const paramEntries = Object.entries(params ?? {});
-  const [activeParam, setActiveParam] = useState(null);
+}: ParametersPageProps) {
+  const paramEntries = Object.entries(params) as [ModelParamKey, string][];
+  const [activeParam, setActiveParam] = useState<ModelParamKey | null>(null);
 
-  const handleParamSelect = (key) =>
-    setActiveParam((prev) => (prev === key ? null : key));
+  const handleParamSelect = (key: string) => {
+    const paramKey = key as ModelParamKey;
+    setActiveParam((prev) => (prev === paramKey ? null : paramKey));
+  };
 
   return (
     <div className="output-container">

@@ -1,6 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import "./css/DropdownFilter.css";
+
+export interface DropdownOption {
+  value: string;
+  label: string;
+}
+
+interface DropdownFilterProps {
+  name: string;
+  label?: string;
+  value: string;
+  onChange: (name: string, value: string) => void;
+  options?: Array<string | DropdownOption>;
+  id?: string;
+  containerClassName?: string;
+  labelClassName?: string;
+  selectClassName?: string;
+  renderOption?: (option: DropdownOption, meta: { isSelected: boolean }) => ReactNode;
+}
 
 export default function DropdownFilter({
   name,
@@ -13,13 +32,13 @@ export default function DropdownFilter({
   labelClassName = "filter-label",
   selectClassName = "filter-select",
   renderOption,
-}) {
+}: DropdownFilterProps) {
   const selectId = id ?? `filter-${name}`;
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef(null);
-  const buttonRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const normalizedOptions = useMemo(
+  const normalizedOptions = useMemo<DropdownOption[]>(
     () =>
       options.map((option) =>
         typeof option === "string" ? { value: option, label: option } : option
@@ -32,14 +51,14 @@ export default function DropdownFilter({
     normalizedOptions[0];
 
   useEffect(() => {
-    const handleOutsideClick = (event) => {
+    const handleOutsideClick = (event: MouseEvent) => {
       if (!containerRef.current) return;
-      if (!containerRef.current.contains(event.target)) {
+      if (!containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
-    const handleEscape = (event) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsOpen(false);
         buttonRef.current?.focus();
@@ -54,7 +73,7 @@ export default function DropdownFilter({
     };
   }, []);
 
-  const handleSelect = (nextValue) => {
+  const handleSelect = (nextValue: string) => {
     if (nextValue !== value) {
       onChange(name, nextValue);
     }
@@ -96,9 +115,7 @@ export default function DropdownFilter({
                     role="option"
                     aria-selected={isSelected}
                     tabIndex={0}
-                    className={`filter-select-option${
-                      isSelected ? " is-selected" : ""
-                    }`}
+                    className={`filter-select-option${isSelected ? " is-selected" : ""}`}
                     onClick={() => handleSelect(option.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
