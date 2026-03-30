@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import * as Slider from "@radix-ui/react-slider";
 import SelectButton from "../SelectButton.tsx";
 import DropdownFilter from "../DropdownFilter.tsx";
@@ -23,14 +24,24 @@ const PARAM_RANGES: Record<ModelParamKey, ParamRange> = {
   reg_alpha:        { min: 0,     max: 10,   step: 0.1   },
 };
 
+const PARAM_LABELS: Record<ModelParamKey, string> = {
+  n_estimators: "Estimators",
+  learning_rate: "Learning Rate",
+  max_depth: "Max Depth",
+  subsample: "Subsample",
+  colsample_bytree: "Col Sample",
+  reg_lambda: "Lambda (L2)",
+  reg_alpha: "Alpha (L1)",
+};
+
 const PARAM_DESCRIPTIONS: Record<ModelParamKey, string> = {
-  n_estimators:     "Number of boosting rounds (trees). More trees = stronger model but slower training. Too many risks overfitting — balance with learning_rate.",
-  learning_rate:    "Shrinks the contribution of each tree. Lower = more conservative, requires more trees. Pair with higher n_estimators for best results.",
-  max_depth:        "Maximum depth per tree. Deeper trees capture more complex patterns but overfit more easily. Values of 3–8 are typical.",
-  subsample:        "Fraction of training samples used per tree. Below 1.0 introduces randomness that reduces overfitting. 0.7–0.9 is a common range.",
-  colsample_bytree: "Fraction of features sampled per tree. Reduces correlation between trees. 0.6–0.9 is common for tabular data.",
-  reg_lambda:       "L2 (ridge) regularization. Higher values shrink weights toward zero, reducing model complexity and variance.",
-  reg_alpha:        "L1 (lasso) regularization. Higher values push weights to exactly zero, useful for sparse feature selection.",
+  n_estimators:     "Number of boosting rounds (trees). More trees = stronger model but slower training. Too many risks overfitting.",
+  learning_rate:    "Shrinks the contribution of each tree. Lower = more conservative, requires more trees.",
+  max_depth:        "Maximum depth per tree. Deeper trees capture more complex patterns but overfit more easily. 3\u20138 is typical.",
+  subsample:        "Fraction of training samples used per tree. Below 1.0 adds randomness to reduce overfitting.",
+  colsample_bytree: "Fraction of features sampled per tree. Reduces correlation between trees. 0.6\u20130.9 is common.",
+  reg_lambda:       "L2 (ridge) regularization. Higher values shrink weights toward zero, reducing complexity.",
+  reg_alpha:        "L1 (lasso) regularization. Higher values push weights to exactly zero for sparse feature selection.",
 };
 
 interface ParametersPageProps {
@@ -76,9 +87,15 @@ export default function ParametersPage({
     <div className="output-container">
       <div>
         <div className="output-title">Model Parameters</div>
-        <div className="output-subtitle">Current Training Configuration</div>
+        <div className="output-subtitle">Training configuration</div>
       </div>
-      <div className="page-panel">
+
+      <motion.div
+        className="page-panel"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
         <div className="page-panel-title">Positions</div>
         <div className="position-toggle-group">
           {TRAINABLE_POSITIONS.map((pos) => (
@@ -92,8 +109,14 @@ export default function ParametersPage({
             </SelectButton>
           ))}
         </div>
-      </div>
-      <div className="page-panel">
+      </motion.div>
+
+      <motion.div
+        className="page-panel"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.06, ease: "easeOut" }}
+      >
         <div className="page-panel-title">Season Window</div>
         <div className="season-dropdowns-row">
           <DropdownFilter
@@ -121,55 +144,72 @@ export default function ParametersPage({
             containerClassName="filter-container season-filter-container"
           />
         </div>
-      </div>
-      <div className="page-panel">
+      </motion.div>
+
+      <motion.div
+        className="page-panel"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.12, ease: "easeOut" }}
+      >
         <div className="page-panel-title">Hyperparameters</div>
         <div className="hyperparam-button-group">
-          {paramEntries.map(([key]) => (
-            <SelectButton
+          {paramEntries.map(([key, value]) => (
+            <button
               key={key}
-              value={key}
-              selected={activeParam === key}
-              onClick={handleParamSelect}
-              buttonClassName="select-button hyperparam-button"
+              type="button"
+              className={`hyperparam-chip${activeParam === key ? " is-active" : ""}`}
+              onClick={() => handleParamSelect(key)}
+              aria-pressed={activeParam === key}
             >
-              {key}
-            </SelectButton>
+              <span className="hyperparam-chip-label">{PARAM_LABELS[key]}</span>
+              <span className="hyperparam-chip-value">{value}</span>
+            </button>
           ))}
         </div>
-        {activeParam && PARAM_RANGES[activeParam] && (
-          <div className="hyperparam-detail">
-            <div className="hyperparam-detail-info">
-              <span className="hyperparam-detail-description">
-                {PARAM_DESCRIPTIONS[activeParam]}
-              </span>
-            </div>
-            <div className="hyperparam-detail-slider">
-              <div className="hyperparam-slider-header">
-                <span className="hyperparam-slider-label">{activeParam}</span>
-                <span className="hyperparam-slider-value">{params[activeParam]}</span>
+
+        <AnimatePresence mode="wait">
+          {activeParam && PARAM_RANGES[activeParam] && (
+            <motion.div
+              key={activeParam}
+              className="hyperparam-detail"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <div className="hyperparam-detail-info">
+                <span className="hyperparam-detail-description">
+                  {PARAM_DESCRIPTIONS[activeParam]}
+                </span>
               </div>
-              <Slider.Root
-                className="slider-root"
-                value={[Number(params[activeParam])]}
-                min={PARAM_RANGES[activeParam].min}
-                max={PARAM_RANGES[activeParam].max}
-                step={PARAM_RANGES[activeParam].step}
-                onValueChange={([val]) => handleParamChange(activeParam, String(val))}
-              >
-                <Slider.Track className="slider-track">
-                  <Slider.Range className="slider-range" />
-                </Slider.Track>
-                <Slider.Thumb className="slider-thumb" aria-label={activeParam} />
-              </Slider.Root>
-              <div className="hyperparam-slider-bounds">
-                <span>{PARAM_RANGES[activeParam].min}</span>
-                <span>{PARAM_RANGES[activeParam].max}</span>
+              <div className="hyperparam-detail-slider">
+                <div className="hyperparam-slider-header">
+                  <span className="hyperparam-slider-label">{PARAM_LABELS[activeParam]}</span>
+                  <span className="hyperparam-slider-value">{params[activeParam]}</span>
+                </div>
+                <Slider.Root
+                  className="slider-root"
+                  value={[Number(params[activeParam])]}
+                  min={PARAM_RANGES[activeParam].min}
+                  max={PARAM_RANGES[activeParam].max}
+                  step={PARAM_RANGES[activeParam].step}
+                  onValueChange={([val]) => handleParamChange(activeParam, String(val))}
+                >
+                  <Slider.Track className="slider-track">
+                    <Slider.Range className="slider-range" />
+                  </Slider.Track>
+                  <Slider.Thumb className="slider-thumb" aria-label={activeParam} />
+                </Slider.Root>
+                <div className="hyperparam-slider-bounds">
+                  <span>{PARAM_RANGES[activeParam].min}</span>
+                  <span>{PARAM_RANGES[activeParam].max}</span>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
-      </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

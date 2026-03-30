@@ -4,30 +4,30 @@
 
 .select-button {
     width: 52px;
-    height: 52px;
-    border-radius: 10px;
+    height: 44px;
+    border-radius: 8px;
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-muted);
-    font-family: inherit;
+    font-family: "JetBrains Mono", monospace;
     font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0;
+    font-weight: 600;
+    letter-spacing: 0.02em;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .select-button:hover:not(.is-selected) {
-    background: var(--bg-2);
+    background: rgba(255, 255, 255, 0.03);
     color: var(--text);
     border-color: var(--border-strong);
 }
 
 .select-button.is-selected {
-    background: var(--border-strong);
-    color: var(--text);
-    border-color: var(--border-strong);
+    background: rgba(246, 115, 115, 0.08);
+    color: var(--accent);
+    border-color: var(--accent);
 }

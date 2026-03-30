@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { BarChart3, Database, Rocket, Zap } from "lucide-react";
 import { getBatchRuns } from "../api/prediction.ts";
 import type { BatchRunInfo } from "../types.ts";
@@ -9,8 +10,8 @@ interface InfoPageProps {
 
 const PARAM_LABELS: Record<string, string> = {
   n_estimators: "Estimators",
-  learning_rate: "Learning Rate",
-  max_depth: "Max Depth",
+  learning_rate: "Learn Rate",
+  max_depth: "Depth",
   subsample: "Subsample",
   colsample_bytree: "Col Sample",
   reg_lambda: "Lambda",
@@ -36,6 +37,11 @@ function formatTimestamp(iso: string): string {
     return iso;
   }
 }
+
+const fadeUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+};
 
 export default function InfoPage({ selectedBatchId }: InfoPageProps) {
   const [batchRuns, setBatchRuns] = useState<BatchRunInfo[] | null>(null);
@@ -90,14 +96,18 @@ export default function InfoPage({ selectedBatchId }: InfoPageProps) {
           </div>
         ) : !batchRuns || batchRuns.length === 0 ? (
           <div className="info-empty-state">
-            <span aria-hidden="true"><BarChart3 size={28} /></span>
+            <span aria-hidden="true"><BarChart3 size={24} strokeWidth={1.5} /></span>
             <span className="info-empty-text">
               Select a training batch from the sidebar to view model details.
             </span>
           </div>
         ) : (
           <>
-            <div className="info-stat-row">
+            <motion.div
+              className="info-stat-row"
+              {...fadeUp}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            >
               <div className="info-stat-box">
                 <span className="info-stat-label">Positions</span>
                 <span className="info-stat-value">
@@ -124,56 +134,75 @@ export default function InfoPage({ selectedBatchId }: InfoPageProps) {
                   <span className="info-stat-value">{meta.best_iteration}</span>
                 </div>
               )}
-            </div>
+            </motion.div>
 
             {trainParams && (
-              <div className="info-section">
+              <motion.div
+                className="info-section"
+                {...fadeUp}
+                transition={{ duration: 0.35, delay: 0.08, ease: "easeOut" }}
+              >
+                <hr className="info-divider" />
                 <div className="info-section-label">Hyperparameters</div>
                 <div className="info-params-grid">
                   {Object.entries(trainParams).map(([key, value]) => (
-                    <div key={key} className="info-param-item">
+                    <div key={key} className="info-param-chip">
                       <span className="info-param-key">{PARAM_LABELS[key] ?? key}</span>
                       <span className="info-param-value">{value}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            <div className="info-section">
+            <motion.div
+              className="info-section"
+              {...fadeUp}
+              transition={{ duration: 0.35, delay: 0.16, ease: "easeOut" }}
+            >
+              <hr className="info-divider" />
               <div className="info-section-label">Validation Metrics</div>
-              <div className="info-metrics-grid">
-                <span className="info-metrics-header">Position</span>
-                <span className="info-metrics-header">MAE</span>
-                <span className="info-metrics-header">RMSE</span>
-                <span className="info-metrics-header">R&sup2;</span>
-                {batchRuns.map((run) => {
-                  const vm = run.meta?.validation_metrics;
-                  const r2 = vm?.r2;
-                  const r2Good = r2 != null && r2 >= 0.5;
-                  return (
-                    <div key={run.position} className="info-metrics-row">
-                      <span className="info-position-pill">{run.position}</span>
-                      <span className="info-metrics-value">{formatMetric(vm?.mae)}</span>
-                      <span className="info-metrics-value">{formatMetric(vm?.rmse)}</span>
-                      <span
-                        className="info-metrics-value"
-                        style={r2Good ? { color: "#78d6c6" } : undefined}
-                      >
-                        {formatMetric(r2)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+              <table className="info-metrics-table">
+                <thead>
+                  <tr>
+                    <th>Position</th>
+                    <th>MAE</th>
+                    <th>RMSE</th>
+                    <th>R&sup2;</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batchRuns.map((run) => {
+                    const vm = run.meta?.validation_metrics;
+                    const r2 = vm?.r2;
+                    const r2Good = r2 != null && r2 >= 0.5;
+                    return (
+                      <tr key={run.position}>
+                        <td>
+                          <span className="info-position-pill">{run.position}</span>
+                        </td>
+                        <td>{formatMetric(vm?.mae)}</td>
+                        <td>{formatMetric(vm?.rmse)}</td>
+                        <td style={r2Good ? { color: "#78d6c6" } : undefined}>
+                          {formatMetric(r2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </motion.div>
           </>
         )}
       </div>
 
-      <div className="info-about-cards">
-        <div className="info-about-card">
-          <span className="info-about-icon" aria-hidden="true"><Zap size={18} /></span>
+      <motion.div
+        className="info-about-cards"
+        {...fadeUp}
+        transition={{ duration: 0.4, delay: 0.24, ease: "easeOut" }}
+      >
+        <div className="info-about-item">
+          <span className="info-about-icon" aria-hidden="true"><Zap size={16} strokeWidth={1.5} /></span>
           <div>
             <div className="info-about-title">How It Works</div>
             <div className="info-about-body">
@@ -184,8 +213,8 @@ export default function InfoPage({ selectedBatchId }: InfoPageProps) {
           </div>
         </div>
 
-        <div className="info-about-card">
-          <span className="info-about-icon" aria-hidden="true"><Database size={18} /></span>
+        <div className="info-about-item">
+          <span className="info-about-icon" aria-hidden="true"><Database size={16} strokeWidth={1.5} /></span>
           <div>
             <div className="info-about-title">Data Sources</div>
             <div className="info-about-body">
@@ -196,8 +225,8 @@ export default function InfoPage({ selectedBatchId }: InfoPageProps) {
           </div>
         </div>
 
-        <div className="info-about-card">
-          <span className="info-about-icon" aria-hidden="true"><Rocket size={18} /></span>
+        <div className="info-about-item">
+          <span className="info-about-icon" aria-hidden="true"><Rocket size={16} strokeWidth={1.5} /></span>
           <div>
             <div className="info-about-title">Getting Started</div>
             <div className="info-about-body">
@@ -207,7 +236,7 @@ export default function InfoPage({ selectedBatchId }: InfoPageProps) {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
