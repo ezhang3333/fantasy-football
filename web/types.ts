@@ -66,3 +66,26 @@ export interface TrainPayload {
 export interface TrainResponse {
   batch_uuid: string;
 }
+
+export interface ValidationMetrics {
+  mae: number;
+  rmse: number;
+  r2: number;
+}
+
+export interface BatchRunMeta {
+  train_params: Record<string, number>;
+  earliest_train_season: number;
+  max_train_season: number;
+  val_season: number;
+  validation_metrics: ValidationMetrics;
+  best_iteration: number;
+  position: string;
+}
+
+export interface BatchRunInfo {
+  position: string;
+  created_at: string;
+  val_season: number;
+  meta: BatchRunMeta;
+}

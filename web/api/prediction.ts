@@ -1,6 +1,7 @@
 import { fetchApi } from './fetchApi.ts';
 import type {
   BatchInfo,
+  BatchRunInfo,
   PlayerPrediction,
   TrainPayload,
   TrainRangeOptions,
@@ -51,6 +52,11 @@ export const listBatches = (limit: number): Promise<BatchInfo[]> => {
 // GET /predictions/batch/{batch_uuid}
 export const getBatchPredictions = (batch_uuid: string): Promise<PlayerPrediction[]> => {
   return fetchApi<PlayerPrediction[]>(`${apiBase}/predictions/batch/${batch_uuid}`);
+};
+
+// GET /predictions/batch/{batch_uuid}/runs
+export const getBatchRuns = (batch_uuid: string): Promise<BatchRunInfo[]> => {
+  return fetchApi<BatchRunInfo[]>(`${apiBase}/predictions/batch/${batch_uuid}/runs`);
 };
 
 // GET /predictions/latest/{position}

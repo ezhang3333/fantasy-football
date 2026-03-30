@@ -438,6 +438,36 @@ class PredictionStore:
         
         return [dict(r) for r in rows]
 
+    def get_batch_runs(self, batch_uuid: str) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT r.position, r.meta_json, b.created_at, b.positions, b.val_season
+                FROM prediction_runs r
+                JOIN prediction_batches b ON r.batch_uuid = b.batch_uuid
+                WHERE r.batch_uuid = ?
+                ORDER BY r.position
+                """,
+                (batch_uuid,),
+            ).fetchall()
+
+        results = []
+        for row in rows:
+            meta = {}
+            try:
+                meta = json.loads(row["meta_json"] or "{}")
+            except Exception:
+                pass
+            meta.pop("feature_cols", None)
+            meta.pop("medians", None)
+            results.append({
+                "position": row["position"],
+                "created_at": row["created_at"],
+                "val_season": row["val_season"],
+                "meta": meta,
+            })
+        return results
+
     def get_past_batches(self, limit: int = 30) -> list[dict[str, Any]]:
         with self._connect() as conn:
             rows = conn.execute(

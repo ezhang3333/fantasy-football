@@ -184,6 +184,11 @@ async def get_past_batch_predictions(limit: int, store: PredictionStore = Depend
     return store.get_past_batches(limit)
 
 
+@app.get("/predictions/batch/{batch_uuid}/runs")
+async def get_batch_runs(batch_uuid: str, store: PredictionStore = Depends(get_store)):
+    return store.get_batch_runs(batch_uuid)
+
+
 @app.get("/predictions/batch/{batch_uuid}")
 async def get_batch_prediction(batch_uuid: str, store: PredictionStore = Depends(get_store)):
     return store.get_batch_prediction(batch_uuid)

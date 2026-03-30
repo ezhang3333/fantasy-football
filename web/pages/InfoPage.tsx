@@ -1,174 +1,211 @@
-export default function InfoPage() {
+import { useEffect, useState } from "react";
+import { BarChart3, Database, Rocket, Zap } from "lucide-react";
+import { getBatchRuns } from "../api/prediction.ts";
+import type { BatchRunInfo } from "../types.ts";
+
+interface InfoPageProps {
+  selectedBatchId: string | null;
+}
+
+const PARAM_LABELS: Record<string, string> = {
+  n_estimators: "Estimators",
+  learning_rate: "Learning Rate",
+  max_depth: "Max Depth",
+  subsample: "Subsample",
+  colsample_bytree: "Col Sample",
+  reg_lambda: "Lambda",
+  reg_alpha: "Alpha",
+};
+
+function formatMetric(value: number | undefined, decimals = 3): string {
+  if (value == null) return "N/A";
+  return value.toFixed(decimals);
+}
+
+function formatTimestamp(iso: string): string {
+  try {
+    const date = new Date(iso);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+export default function InfoPage({ selectedBatchId }: InfoPageProps) {
+  const [batchRuns, setBatchRuns] = useState<BatchRunInfo[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedBatchId) {
+      setBatchRuns(null);
+      return;
+    }
+    let cancelled = false;
+    setIsLoading(true);
+    getBatchRuns(selectedBatchId)
+      .then((runs) => {
+        if (!cancelled) setBatchRuns(runs);
+      })
+      .catch(() => {
+        if (!cancelled) setBatchRuns(null);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [selectedBatchId]);
+
+  const firstRun = batchRuns?.[0] ?? null;
+  const meta = firstRun?.meta ?? null;
+  const trainParams = meta?.train_params ?? null;
+
   return (
     <div className="output-container info-page-scroll">
-      <div className="output-title">Project Info</div>
-      <div className="output-subtitle">Fantasy Football Predictor</div>
-
-      <div className="page-panel">
-        <div className="page-panel-title">What This App Does</div>
-        <div className="page-panel-copy">
-          This app uses historical NFL data and machine learning to predict how many fantasy points a
-          player is likely to score over the next four weeks. Separate prediction models are trained
-          for each position — QB, RB, WR, and TE — so that each model learns patterns specific to
-          how that position scores.
+      <div className="output-header">
+        <div>
+          <div className="output-title">Info</div>
+          <div className="output-subtitle">Model details and how the app works</div>
         </div>
       </div>
 
-      <div className="page-panel">
-        <div className="page-panel-title">How We Collect the Data</div>
-        <div className="page-panel-copy">
-          The dataset is assembled from two sources that are combined into a single week-by-week
-          record for every active skill-position player going back to 2016.
-          <br />
-          <br />
-          <strong>NFL Play-by-Play &amp; Roster Data (nflverse)</strong>
-          <br />
-          The bulk of the data comes from the open-source nflverse project, which publishes
-          regularly updated NFL datasets. We pull:
-          <ul style={{ marginTop: "0.5rem", paddingLeft: "1.25rem", lineHeight: "1.8" }}>
-            <li>
-              <strong>Weekly player stats</strong> — passing yards, completions, rushing yards,
-              targets, receptions, receiving yards, touchdowns, fumbles, fantasy points, and more.
-            </li>
-            <li>
-              <strong>Next Gen Stats</strong> — advanced tracking data such as average separation
-              from defenders, time to throw, air yards, and yards after contact that go beyond the
-              traditional box score.
-            </li>
-            <li>
-              <strong>Fantasy opportunity data</strong> — how many passing/rushing/receiving
-              opportunities a player received compared to what was statistically expected, revealing
-              how much of a role they play in their offense.
-            </li>
-            <li>
-              <strong>Snap counts</strong> — the percentage of offensive plays a player was on the
-              field, a strong indicator of their involvement.
-            </li>
-            <li>
-              <strong>Roster &amp; player info</strong> — experience level, draft round, team, and
-              active roster status.
-            </li>
-            <li>
-              <strong>Game schedules</strong> — game location, weather conditions (temp, wind,
-              roof), and Vegas spread lines.
-            </li>
-          </ul>
-          <br />
-          <strong>Defensive Matchup Data (Pro Football Reference)</strong>
-          <br />
-          A player's performance also depends on who they are playing against. We scrape Pro
-          Football Reference to get how many fantasy points each NFL defense has allowed to each
-          position throughout the season. This tells the model whether a player is facing a
-          weak or strong defense at their position.
-          <br />
-          <br />
-          All of this data is merged together on a per-player, per-week basis, cleaned, and
-          engineered into the feature set the model trains on.
+      <div className="info-model-card">
+        <div className="info-model-header">
+          <span className="info-model-header-title">Selected Model</span>
+          {firstRun && (
+            <span className="info-model-header-time">
+              {formatTimestamp(firstRun.created_at)}
+            </span>
+          )}
         </div>
+
+        {isLoading ? (
+          <div className="info-empty-state">
+            <span className="info-empty-text">Loading model details...</span>
+          </div>
+        ) : !batchRuns || batchRuns.length === 0 ? (
+          <div className="info-empty-state">
+            <span aria-hidden="true"><BarChart3 size={28} /></span>
+            <span className="info-empty-text">
+              Select a training batch from the sidebar to view model details.
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="info-stat-row">
+              <div className="info-stat-box">
+                <span className="info-stat-label">Positions</span>
+                <span className="info-stat-value">
+                  {batchRuns.map((run) => (
+                    <span key={run.position} className="info-position-pill">
+                      {run.position}
+                    </span>
+                  ))}
+                </span>
+              </div>
+              <div className="info-stat-box">
+                <span className="info-stat-label">Training Window</span>
+                <span className="info-stat-value">
+                  {meta?.earliest_train_season ?? "?"} &ndash; {meta?.max_train_season ?? "?"}
+                </span>
+              </div>
+              <div className="info-stat-box">
+                <span className="info-stat-label">Validation Season</span>
+                <span className="info-stat-value">{meta?.val_season ?? "?"}</span>
+              </div>
+              {meta?.best_iteration != null && (
+                <div className="info-stat-box">
+                  <span className="info-stat-label">Best Iteration</span>
+                  <span className="info-stat-value">{meta.best_iteration}</span>
+                </div>
+              )}
+            </div>
+
+            {trainParams && (
+              <div className="info-section">
+                <div className="info-section-label">Hyperparameters</div>
+                <div className="info-params-grid">
+                  {Object.entries(trainParams).map(([key, value]) => (
+                    <div key={key} className="info-param-item">
+                      <span className="info-param-key">{PARAM_LABELS[key] ?? key}</span>
+                      <span className="info-param-value">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="info-section">
+              <div className="info-section-label">Validation Metrics</div>
+              <div className="info-metrics-grid">
+                <span className="info-metrics-header">Position</span>
+                <span className="info-metrics-header">MAE</span>
+                <span className="info-metrics-header">RMSE</span>
+                <span className="info-metrics-header">R&sup2;</span>
+                {batchRuns.map((run) => {
+                  const vm = run.meta?.validation_metrics;
+                  const r2 = vm?.r2;
+                  const r2Good = r2 != null && r2 >= 0.5;
+                  return (
+                    <div key={run.position} className="info-metrics-row">
+                      <span className="info-position-pill">{run.position}</span>
+                      <span className="info-metrics-value">{formatMetric(vm?.mae)}</span>
+                      <span className="info-metrics-value">{formatMetric(vm?.rmse)}</span>
+                      <span
+                        className="info-metrics-value"
+                        style={r2Good ? { color: "#78d6c6" } : undefined}
+                      >
+                        {formatMetric(r2)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="page-panel">
-        <div className="page-panel-title">What the Model is Predicting</div>
-        <div className="page-panel-copy">
-          The target variable — the thing each model is trying to predict — is a player's{" "}
-          <strong>average PPR fantasy points over the next four weeks</strong> from any given week.
-          Using a four-week average rather than a single week smooths out the noise that comes with
-          individual games (a fluky touchdown, a garbage-time stat line, etc.) and gives a better
-          picture of a player's expected near-term value.
-          <br />
-          <br />
-          Alongside the raw prediction, the app also computes a <strong>delta</strong> — the
-          difference between the model's projected output and the player's previous five-week
-          average. A positive delta flags players the model expects to outperform their recent
-          baseline, which can surface breakout candidates.
+      <div className="info-about-cards">
+        <div className="info-about-card">
+          <span className="info-about-icon" aria-hidden="true"><Zap size={18} /></span>
+          <div>
+            <div className="info-about-title">How It Works</div>
+            <div className="info-about-body">
+              The app trains per-position XGBoost models on historical NFL data to predict each
+              player's average PPR fantasy points over the next 4 weeks. A delta score highlights
+              players expected to outperform their recent baseline, surfacing breakout candidates.
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="page-panel">
-        <div className="page-panel-title">The Model: XGBoost Gradient Boosted Trees</div>
-        <div className="page-panel-copy">
-          We use a machine learning model called <strong>XGBoost</strong>, which is a type of
-          gradient boosted decision tree. Here is what that means in plain terms.
-          <br />
-          <br />
-          <strong>Decision Trees</strong>
-          <br />
-          A decision tree is essentially a flowchart of yes/no questions about a player's stats.
-          For example: "Did this running back have more than 15 carries last week? If yes, go left.
-          If no, go right." It keeps branching until it reaches a prediction at the end. A single
-          tree is fast but not very accurate on its own — it tends to oversimplify patterns in the
-          data.
-          <br />
-          <br />
-          <strong>Gradient Boosting</strong>
-          <br />
-          Gradient boosting solves this by building hundreds or thousands of small, shallow trees
-          one after another. Each new tree focuses specifically on the mistakes the previous trees
-          made — it looks at which players were predicted poorly and tries to correct those errors.
-          The final prediction is the combined output of all those trees added together, with each
-          tree contributing only a small amount. This "wisdom of the crowd" approach produces a
-          much more accurate model than any single tree could on its own.
-          <br />
-          <br />
-          The word "gradient" refers to the mathematical technique used to figure out how to
-          correct errors each round — the model uses calculus to point each new tree in the
-          direction that reduces prediction error the most.
-          <br />
-          <br />
-          <strong>Why XGBoost for Fantasy Football?</strong>
-          <br />
-          XGBoost is a particularly well-suited choice for this kind of problem because:
-          <ul style={{ marginTop: "0.5rem", paddingLeft: "1.25rem", lineHeight: "1.8" }}>
-            <li>
-              It handles dozens of different types of stats at once without needing them all to be
-              on the same scale.
-            </li>
-            <li>
-              It deals gracefully with missing data, which is common when players miss games or when
-              certain stats are not tracked for a position.
-            </li>
-            <li>
-              It captures non-linear relationships — for example, that a slight increase in snap
-              count matters a lot more when a player already has a high target share.
-            </li>
-            <li>
-              It is less likely to overfit (memorize the training data without generalizing) compared
-              to deeper neural network approaches, which matters when working with a relatively small
-              number of NFL seasons.
-            </li>
-          </ul>
+        <div className="info-about-card">
+          <span className="info-about-icon" aria-hidden="true"><Database size={18} /></span>
+          <div>
+            <div className="info-about-title">Data Sources</div>
+            <div className="info-about-body">
+              Training data combines nflverse play-by-play stats, Next Gen Stats, snap counts, and
+              roster data with defensive matchup rankings scraped from Pro Football Reference. All
+              data is merged per-player, per-week from 2016 onward.
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="page-panel">
-        <div className="page-panel-title">Training &amp; Validation</div>
-        <div className="page-panel-copy">
-          The model is trained using a <strong>time-based split</strong>: you select which seasons
-          to train on and which single season to hold out as a validation set. The validation season
-          must always be more recent than the training seasons — this mimics the real-world
-          scenario of predicting a future season from past data and prevents the model from
-          accidentally learning from the future.
-          <br />
-          <br />
-          After training, the model is evaluated on the held-out validation season using three
-          metrics: <strong>MAE</strong> (mean absolute error — how many fantasy points off the
-          prediction is on average), <strong>RMSE</strong> (similar but penalizes large errors
-          more heavily), and <strong>R²</strong> (how much of the variation in fantasy scores the
-          model explains, from 0 to 1).
-        </div>
-      </div>
-
-      <div className="page-panel">
-        <div className="page-panel-title">How to Use This App</div>
-        <div className="page-panel-copy">
-          1. Go to the <strong>Parameters</strong> page to configure your training season range,
-          validation season, and XGBoost hyperparameters.
-          <br />
-          2. Click <strong>Train</strong> to run the pipeline and generate predictions for the most
-          recent week in the dataset.
-          <br />
-          3. Return to the <strong>Home</strong> page to browse and filter the scored player
-          rankings, sorted by projected output or delta.
+        <div className="info-about-card">
+          <span className="info-about-icon" aria-hidden="true"><Rocket size={18} /></span>
+          <div>
+            <div className="info-about-title">Getting Started</div>
+            <div className="info-about-body">
+              1. Configure positions, season window, and hyperparameters on the Parameters page.<br />
+              2. Click Train Model to run the pipeline and generate predictions.<br />
+              3. View scored player rankings on the Home page, sorted by projection or delta.
+            </div>
+          </div>
         </div>
       </div>
     </div>

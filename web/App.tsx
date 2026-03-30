@@ -151,7 +151,6 @@ export default function App() {
 
   const handleHistoryListItemClick = async (batch_uuid: string) => {
     try {
-      navigate("/");
       setSelectedBatchId(batch_uuid);
       const playerData = await getBatchPredictions(batch_uuid);
       setModelOutputs(playerData);
@@ -454,7 +453,7 @@ export default function App() {
             />
           }
         />
-        <Route path="/info" element={<InfoPage />} />
+        <Route path="/info" element={<InfoPage selectedBatchId={selectedBatchId} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {isTraining && (
