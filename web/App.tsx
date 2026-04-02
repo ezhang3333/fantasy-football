@@ -44,7 +44,7 @@ const DEFAULT_SIDEBAR_SECTIONS = {
 
 type SidebarSections = typeof DEFAULT_SIDEBAR_SECTIONS;
 
-const DEFAULT_PARAMS: ModelParams = {
+export const DEFAULT_PARAMS: ModelParams = {
   n_estimators: "300",
   learning_rate: "0.1",
   max_depth: "6",
@@ -161,6 +161,10 @@ export default function App() {
 
   const handleParamChange = (name: ModelParamKey, rawValue: string) => {
     setParams((prev) => ({ ...prev, [name]: rawValue }));
+  };
+
+  const handleResetParams = () => {
+    setParams(DEFAULT_PARAMS);
   };
 
   const toggleTrainPosition = (position: string) => {
@@ -439,6 +443,7 @@ export default function App() {
             <ParametersPage
               params={params}
               handleParamChange={handleParamChange}
+              handleResetParams={handleResetParams}
               selectedTrainPositions={selectedTrainPositions}
               toggleTrainPosition={toggleTrainPosition}
               earliestTrainSeason={earliestTrainSeason}

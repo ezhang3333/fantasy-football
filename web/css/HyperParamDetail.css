@@ -47,6 +47,29 @@
     color: var(--accent);
 }
 
+.hyperparam-reset {
+    margin-left: auto;
+    margin-right: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+}
+
+.hyperparam-reset.is-changed {
+    opacity: 1;
+    cursor: pointer;
+    pointer-events: auto;
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.hyperparam-reset.is-changed:hover {
+    border-color: var(--border-strong);
+    background: rgba(255, 255, 255, 0.02);
+}
+
 .hyperparam-detail {
     display: flex;
     flex-direction: column;

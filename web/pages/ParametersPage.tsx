@@ -5,6 +5,7 @@ import SelectButton from "../SelectButton.tsx";
 import DropdownFilter from "../DropdownFilter.tsx";
 import type { DropdownOption } from "../DropdownFilter.tsx";
 import { TRAINABLE_POSITIONS } from "../constants.ts";
+import { DEFAULT_PARAMS } from "../App.tsx";
 import type { ModelParams, ModelParamKey } from "../types.ts";
 import "../css/HyperParamDetail.css";
 
@@ -47,6 +48,7 @@ const PARAM_DESCRIPTIONS: Record<ModelParamKey, string> = {
 interface ParametersPageProps {
   params: ModelParams;
   handleParamChange: (name: ModelParamKey, value: string) => void;
+  handleResetParams: () => void;
   selectedTrainPositions: string[];
   toggleTrainPosition: (position: string) => void;
   earliestTrainSeason: string;
@@ -63,6 +65,7 @@ interface ParametersPageProps {
 export default function ParametersPage({
   params,
   handleParamChange,
+  handleResetParams,
   selectedTrainPositions,
   toggleTrainPosition,
   earliestTrainSeason,
@@ -77,6 +80,10 @@ export default function ParametersPage({
 }: ParametersPageProps) {
   const paramEntries = Object.entries(params) as [ModelParamKey, string][];
   const [activeParam, setActiveParam] = useState<ModelParamKey | null>(null);
+
+  const hasParamChanges = paramEntries.some(
+    ([key, value]) => value !== DEFAULT_PARAMS[key]
+  );
 
   const handleParamSelect = (key: string) => {
     const paramKey = key as ModelParamKey;
@@ -166,6 +173,14 @@ export default function ParametersPage({
               <span className="hyperparam-chip-value">{value}</span>
             </button>
           ))}
+          <button
+            type="button"
+            className={`hyperparam-chip hyperparam-reset${hasParamChanges ? " is-changed" : ""}`}
+            disabled={!hasParamChanges}
+            onClick={handleResetParams}
+          >
+            Reset
+          </button>
         </div>
 
         <AnimatePresence mode="wait">
