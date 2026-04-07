@@ -45,8 +45,8 @@ export const getRunPredictions = (run_uuid: string): Promise<PlayerPrediction[]>
 };
 
 // GET /predictions/batch/past
-export const listBatches = (limit: number): Promise<BatchInfo[]> => {
-  return fetchApi<BatchInfo[]>(`${apiBase}/predictions/batch/past?limit=${limit}`);
+export const listBatches = (days: number = 30): Promise<BatchInfo[]> => {
+  return fetchApi<BatchInfo[]>(`${apiBase}/predictions/batch/past?days=${days}`);
 };
 
 // GET /predictions/batch/{batch_uuid}

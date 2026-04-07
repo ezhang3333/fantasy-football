@@ -468,17 +468,18 @@ class PredictionStore:
             })
         return results
 
-    def get_past_batches(self, limit: int = 30) -> list[dict[str, Any]]:
+    def get_past_batches(self, days: int = 30) -> list[dict[str, Any]]:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         with self._connect() as conn:
             rows = conn.execute(
                 """
                 SELECT
                     batch_uuid, created_at, positions, val_season, data_dir, model_dir
                 FROM prediction_batches
+                WHERE created_at >= ?
                 ORDER BY created_at DESC
-                LIMIT ?
                 """,
-                (limit,),
+                (cutoff,),
             ).fetchall()
 
         return [dict(r) for r in rows]

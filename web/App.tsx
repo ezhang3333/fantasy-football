@@ -77,7 +77,7 @@ export default function App() {
   useEffect(() => {
     const loadHistoryListOnStart = async () => {
       try {
-        const batches = await listBatches(15);
+        const batches = await listBatches(30);
         setListBatchPredictions(batches);
       } catch (e) {
         throw new Error(`Error on startup: ${(e as Error).message}`);
@@ -243,7 +243,7 @@ export default function App() {
     };
     try {
       await trainModel(payload);
-      const batches = await listBatches(15);
+      const batches = await listBatches(30);
       setListBatchPredictions(batches);
       if (batches.length > 0) {
         const newest = batches[0];
@@ -359,7 +359,7 @@ export default function App() {
             />
             <SidebarRouteItem
               to="/info"
-              label="Info"
+              label="Model Info"
               icon={<CircleHelp size={14} />}
             />
           </nav>

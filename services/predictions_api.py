@@ -180,8 +180,8 @@ async def get_predictions_for_run(run_uuid: str, store: PredictionStore = Depend
 
 
 @app.get("/predictions/batch/past")
-async def get_past_batch_predictions(limit: int, store: PredictionStore = Depends(get_store)):
-    return store.get_past_batches(limit)
+async def get_past_batch_predictions(days: int = 30, store: PredictionStore = Depends(get_store)):
+    return store.get_past_batches(days)
 
 
 @app.get("/predictions/batch/{batch_uuid}/runs")

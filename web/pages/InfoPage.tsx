@@ -75,7 +75,7 @@ export default function InfoPage({ selectedBatchId }: InfoPageProps) {
     <div className="output-container info-page-scroll">
       <div className="output-header">
         <div>
-          <div className="output-title">Info</div>
+          <div className="output-title">Model Info</div>
           <div className="output-subtitle">Model details and how the app works</div>
         </div>
       </div>
