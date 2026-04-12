@@ -341,10 +341,6 @@ export default function App() {
     <AppShell
       sidebar={
         <>
-          <div className="sidebar-header">
-            <User size={16} />
-            Sign In
-          </div>
           <nav className="sidebar-route-nav" aria-label="Pages">
             <SidebarRouteItem
               to="/"
