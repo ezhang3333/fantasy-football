@@ -177,6 +177,8 @@ class PredictionRun:
 
 class PredictionStore:
     def __init__(self, database_url: str, auth_token: str | None = None) -> None:
+        if database_url.startswith("libsql://"):
+            database_url = "https://" + database_url[len("libsql://") :]
         self.database_url = database_url
         self.auth_token = auth_token
         self._client: libsql_client.Client | None = None
