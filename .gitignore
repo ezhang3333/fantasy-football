@@ -2,7 +2,10 @@ venv/
 __pycache__/
 *.pyc
 venv311/
-pipeline_data/
+pipeline_data/*
+!pipeline_data/final/
+pipeline_data/final/*
+!pipeline_data/final/*.csv
 model/outputs/
 node_modules/
 CLAUDE.md
