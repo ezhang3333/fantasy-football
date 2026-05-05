@@ -31,7 +31,7 @@ app.add_middleware(
 
 @lru_cache(maxsize=1)
 def _store() -> PredictionStore:
-    store = PredictionStore(settings.turso_database_url, settings.turso_auth_token)
+    store = PredictionStore(settings.database_url, settings.turso_auth_token)
     store.ensure_schema()
     return store
 

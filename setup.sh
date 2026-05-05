@@ -66,9 +66,9 @@ python -c "
 from config import get_settings
 from model.database import PredictionStore
 settings = get_settings()
-store = PredictionStore(settings.turso_database_url, settings.turso_auth_token)
+store = PredictionStore(settings.database_url, settings.turso_auth_token)
 store.ensure_schema()
-print(f'Schema ready at {settings.turso_database_url}')
+print(f'Schema ready at {settings.database_url}')
 "
 
 # Data pipeline
@@ -80,6 +80,6 @@ else
 fi
 
 step "Setup complete."
-echo "  - DB: \$TURSO_DATABASE_URL (or local file:./model/outputs/predictions.sqlite3 if unset)"
+echo "  - DB: \$DATABASE_URL (or local file:./model/outputs/predictions.sqlite3 if unset)"
 echo "  - Final CSVs: pipeline_data/final/*_final_data.csv"
 echo "  - Next: ./start.sh, then click 'Train' in the UI to train models + seed predictions."
