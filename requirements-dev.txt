@@ -1,0 +1,8 @@
+-r requirements.txt
+
+requests
+beautifulsoup4
+nflreadpy
+curl_cffi>=0.13.0,<1.0.0
+camoufox>=0.4.11,<1.0.0
+scrapling[fetchers]>=0.1

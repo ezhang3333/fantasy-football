@@ -43,9 +43,9 @@ echo "Using python: $(command -v python)"
 python --version
 
 # Python dependencies
-step "Installing Python requirements"
+step "Installing Python requirements (dev)"
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 
 step "Installing scrapling browser binaries (camoufox)"
 # Required for the PFR defense-vs-position scraper
@@ -60,14 +60,15 @@ else
   echo "WARNING: npm not found; skipping frontend install. Install Node.js to run the Vite client." >&2
 fi
 
-# SQLite schema
-step "Initializing SQLite schema (model/outputs/predictions.sqlite3)"
+# Database schema
+step "Initializing database schema"
 python -c "
-from constants import DB_PATH
+from config import get_settings
 from model.database import PredictionStore
-store = PredictionStore(DB_PATH)
+settings = get_settings()
+store = PredictionStore(settings.turso_database_url, settings.turso_auth_token)
 store.ensure_schema()
-print(f'Schema ready at {DB_PATH}')
+print(f'Schema ready at {settings.turso_database_url}')
 "
 
 # Data pipeline
@@ -79,6 +80,6 @@ else
 fi
 
 step "Setup complete."
-echo "  - SQLite DB: model/outputs/predictions.sqlite3 (schema only)"
+echo "  - DB: \$TURSO_DATABASE_URL (or local file:./model/outputs/predictions.sqlite3 if unset)"
 echo "  - Final CSVs: pipeline_data/final/*_final_data.csv"
 echo "  - Next: ./start.sh, then click 'Train' in the UI to train models + seed predictions."

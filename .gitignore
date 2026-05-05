@@ -3,10 +3,11 @@ __pycache__/
 *.pyc
 venv311/
 pipeline_data/
-model/artifacts/
 model/outputs/
 node_modules/
 CLAUDE.md
 .claude/
 goals.txt
 dist/
+.env
+.env.local

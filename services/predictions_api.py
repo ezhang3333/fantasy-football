@@ -6,7 +6,8 @@ import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from constants import ALL_POSITIONS, DB_PATH
+from config import get_settings
+from constants import ALL_POSITIONS
 from model.database import PredictionStore
 from model.gbt_regression import XGBHyperParams, load_final_dataset, train_xgb_regressor
 from model.predict import _default_output_columns, predict_position
@@ -18,28 +19,31 @@ class Position(str, Enum):
     WR = "WR"
     TE = "TE"
 
+settings = get_settings()
+
 app = FastAPI(title="FantasyFootball Predictions API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "https://localhost:3000",
-    ],
+    allow_origins=settings.cors_origins_list,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 @lru_cache(maxsize=1)
 def _store() -> PredictionStore:
-    db_path = DB_PATH
-    store = PredictionStore(db_path)
+    store = PredictionStore(settings.turso_database_url, settings.turso_auth_token)
     store.ensure_schema()
     return store
 
 
 def get_store() -> PredictionStore:
     return _store()
+
+
+@app.get("/healthz")
+async def healthz(store: PredictionStore = Depends(get_store)):
+    store._execute("SELECT 1")
+    return {"ok": True}
 
 
 def _positions_from_query(positions: str | None) -> list[Position]:
@@ -204,6 +208,9 @@ async def get_latest_predictions(position: Position, store: PredictionStore = De
 
 @app.post("/train")
 async def train_models(payload: TrainRequest, store: PredictionStore = Depends(get_store)):
+    if not settings.allow_training:
+        raise HTTPException(status_code=403, detail="Training is disabled in this environment.")
+
     params = XGBHyperParams(
         n_estimators=payload.n_estimators,
         learning_rate=payload.learning_rate,
